@@ -19,3 +19,12 @@ ImGui ready to use, PBR (Physically Based Renderin) techniques and environment r
 through rectangular images, some example shaders that can be very useful and some more meshes to create rectangles, spheres and cubes.
 
 I hope this project is very useful for anyone to be able to deal with opentk, in the future I will implement new elements.
+
+
+### install
+
+Esse projeto foi feito utilizando o dotnet core, para utiliza-lo basta instalar o dotnet core fazer o download e no diretorio principal dentro de algum cmd
+e chame o comando dotnet build.
+
+This project was made using dotnet core, to use it just install dotnet core and download it in the main directory inside some cmd
+and call the dotnet build command.
