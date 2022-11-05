@@ -2,6 +2,8 @@
 
 ## An Opentk project with a lot already implemented
 
+![](OpenTK/demo.png)
+
 This project is already done and can serve as an example to build your own project.
 What has already been done:
 Asssimp is already implemented to load models, fonts can be loaded, a rendering framebuffer to create post-processing,
