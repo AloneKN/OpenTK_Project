@@ -1,0 +1,11 @@
+Model Information:
+* title:	Free Spaceship Unitron
+* source:	https://sketchfab.com/3d-models/free-spaceship-unitron-20a3bf99baf943f2887cb586b5195224
+* author:	Ruslan Malovsky (https://sketchfab.com/malovsky)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Free Spaceship Unitron" (https://sketchfab.com/3d-models/free-spaceship-unitron-20a3bf99baf943f2887cb586b5195224) by Ruslan Malovsky (https://sketchfab.com/malovsky) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
