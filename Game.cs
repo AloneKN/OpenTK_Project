@@ -21,7 +21,7 @@ namespace MyGame
             crossHair = new ViewPort("Resources/img/crosshair.png");
             objColor = new ObjColor();
 
-            // HDR images are also supported, I didn't put any here, they are too big
+            // HDR images are also supported
             // cube_map = new CubeMap("Resources/Cubemap/HDRI/Milkyway.hdr", false);
             
             // cube_map = new CubeMap("Resources/Cubemap/nebulle.jpg", false);
