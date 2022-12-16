@@ -24,5 +24,7 @@ Video Example: (https://www.youtube.com/watch?v=DZ6q1_Dccxs)
 ********
 ### install
 
-This project was made using dotnet core, to use it just install dotnet core and download it in the main directory inside some cmd
-and call the dotnet build command.
+This project was made using dotnet core. 
+* To use it just install dotnet core. 
+* Download the repository or do a git merge.
+* In the main directory on a terminal call the dotnet build command.
