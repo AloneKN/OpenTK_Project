@@ -5,68 +5,67 @@ namespace MyGame
     public class Game : IDisposable
     {
         
-        public CubeMap cube_map;
+        public CubeMap cubeMap;
         private Text text;
         private ViewPort crossHair;
-        private Models Unitron;
-        private PostProcessing postProcessing;
-        private ObjColor objColor;
+        private Bloom bloom;
+        private ObjColor Light;
         private Stencil stencil;
-        public static Vector3 LuzPosition = new Vector3(0.0f, 5.0f, 0.0f);
+        public static Vector3 LuzPosition = Vector3.UnitY * 5.0f;
+        private Model Unitron;
         public Game()
         {
-
             text = new Text("Resources/Fonts/Wigners.otf");
 
             crossHair = new ViewPort("Resources/img/crosshair.png");
-            objColor = new ObjColor();
+            Light = new ObjColor();
 
-            // HDR images are also supported, I didn't put any here, they are too big
-            // cube_map = new CubeMap("Resources/Cubemap/HDRI/Milkyway.hdr", false);
+            cubeMap = new CubeMap("Resources/Cubemap/HDRI/Milkyway.hdr", false);
+            // cubeMap = new CubeMap("Resources/Cubemap/nebulle.jpg", false);
+            // cubeMap = new CubeMap("Resources/Cubemap/mars.png", true);
             
-            // cube_map = new CubeMap("Resources/Cubemap/nebulle.jpg", false);
-            cube_map = new CubeMap("Resources/Cubemap/mars.png", true);
-            Unitron = new Models("Resources/unitron/scene.gltf");
+            Unitron = new Model(AssimpModel.Load("Resources/unitron/scene.gltf"));
+            Unitron.texturesCubemaps = cubeMap.texturesCBMaps;
 
-            postProcessing = new PostProcessing();
+            bloom = new Bloom();
             stencil = new Stencil();
 
         }
         public void RenderFrame()
         {
-            postProcessing.Active();
-            
-            cube_map.RenderFrame();
+ 
+            bloom.Active();
 
-            objColor.RenderFrame();
+            cubeMap.RenderFrame();
+
+            Light.RenderFrame();
 
             stencil.Active();
             Unitron.RenderFrame();
 
-            stencil.RenderFrame(Unitron.model, ConvertColor.Color4(Values.StencilColor));
+
+            stencil.RenderFrame(Unitron.modelMatrix, Values.StencilColor);
             Unitron.RenderForStencil();
             stencil.Deactive();
 
             crossHair.RenderFrame(Vector2.Zero, 0.03f);
 
-            text.RenderText($"Frames: {Clock.Frames.ToString()}", new Vector2(10.0f, Program.Size.Y - 50.0f),
-                            0.45f, ConvertColor.Color4(Values.fpsColor));
+            text.RenderText($"Frames: {Clock.FramesForSecond.ToString()}", new Vector2(10.0f, Program.Size.Y - 50.0f),
+                            0.45f, Values.fpsColor);
 
-            text.RenderText("OpenTK APP", new Vector2(Program.Size.X - 200, 50.0f), 0.45f, Color4.Aquamarine);
+            bloom.RenderFrame();
 
-            postProcessing.RenderFrame();
         }
         public void ResizedFrame()
         {
-            postProcessing.ResizedFrame();
+            bloom.ResizedFrameBuffer();
         }
         public void UpdateFrame()
         {
-            objColor.UpdateFrame();
+            Light.UpdateFrame();
         }
         public void Dispose()
         {   
-
         }
     }
 }

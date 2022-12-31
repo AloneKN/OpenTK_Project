@@ -4,15 +4,16 @@ using StbImageSharp;
 
 namespace MyGame
 {
-    public struct TexturesCBMaps
-    {
-        public static int Background_CB_Map, Irradiance_CB_Map, PreFilter_CB_Map;
-
-    }
     /// <sumary>
     /// Usada para criar cubemaps atraves de imagens comuns(retangulares) especialmente hdrs
     /// Formatos especias tambem podem ser criados 
     /// <sumary/>
+    public struct TexturesCBMaps
+    {
+        public int Background_CB_Map { get; set; } 
+        public int Irradiance_CB_Map { get; set; }
+        public int PreFilter_CB_Map  { get; set; }
+    }
     public class CubeMap
     {
         ShaderProgram equirectangularToCubemapShader;
@@ -54,13 +55,18 @@ namespace MyGame
             irradianceShader = new ShaderProgram("Cubemap/shaders/cubemap.vert", "Cubemap/shaders/irradiance_convolution.frag");
             prefilterShader = new ShaderProgram("Cubemap/shaders/cubemap.vert", "Cubemap/shaders/prefilter.frag");
             
+            CreateMaps(path);
+            
+        }
+        private int size = 1024;
+        private void CreateMaps(string path)
+        {
             LoadImage(path);
             CreateBackground();
             ConfigureIrradianceMap();
             PreFilter();
-            
+       
         }
-        private int size = 1024;
         private void LoadImage(string path)
         {
             captureFrameBO = GL.GenFramebuffer();
@@ -90,12 +96,15 @@ namespace MyGame
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
         }
+        private TexturesCBMaps _textures_cb_maps;
+        public TexturesCBMaps texturesCBMaps { get => _textures_cb_maps; }
         private void CreateBackground()
         {
             // creando o cubemap atraves da imagem que foi carregada
-            TexturesCBMaps.Background_CB_Map = GL.GenTexture();
-            GL.BindTexture(TextureTarget.TextureCubeMap, TexturesCBMaps.Background_CB_Map);
+            _textures_cb_maps.Background_CB_Map = GL.GenTexture();
+            GL.BindTexture(TextureTarget.TextureCubeMap, _textures_cb_maps.Background_CB_Map);
 
             for(int i = 0; i < 6; i++)
             {
@@ -103,29 +112,24 @@ namespace MyGame
                 size, size, 0, PixelFormat.Rgb, PixelType.Float, IntPtr.Zero);
             }
 
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            SetParametersImage();
 
-            GL.GenerateMipmap(GenerateMipmapTarget.TextureCubeMap);
-
+            
             equirectangularToCubemapShader.Use();
-            equirectangularToCubemapShader.SetMatrix4("projection", captureProjection);
-            equirectangularToCubemapShader.SetBool("customTexture", CustomTexture);
+            equirectangularToCubemapShader.SetUniform("projection", captureProjection);
+            equirectangularToCubemapShader.SetUniform("customTexture", CustomTexture);
 
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, HDR_Texture);
-            equirectangularToCubemapShader.SetTexture("equirectangularMap", 0);
+            equirectangularToCubemapShader.SetUniform("equirectangularMap", 0);
 
             GL.Viewport(0, 0, size, size);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, captureFrameBO);
             for(int i = 0; i < 6; i++)
             {
-                equirectangularToCubemapShader.SetMatrix4("view", captureViews[i]);
+                equirectangularToCubemapShader.SetUniform("view", captureViews[i]);
                 GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, 
-                    TextureTarget.TextureCubeMapPositiveX + i, TexturesCBMaps.Background_CB_Map, 0);
+                    TextureTarget.TextureCubeMapPositiveX + i, _textures_cb_maps.Background_CB_Map, 0);
 
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
                 RenderCube();
@@ -135,38 +139,34 @@ namespace MyGame
         // aqui começamos configurar o cube map, de reflexão
         private void ConfigureIrradianceMap()
         {
-            TexturesCBMaps.Irradiance_CB_Map = GL.GenTexture();
-            GL.BindTexture(TextureTarget.TextureCubeMap, TexturesCBMaps.Irradiance_CB_Map);
+            _textures_cb_maps.Irradiance_CB_Map = GL.GenTexture();
+            GL.BindTexture(TextureTarget.TextureCubeMap, _textures_cb_maps.Irradiance_CB_Map);
             for(int i = 0; i < 6; i++)
             {
                 GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + i, 0, internalFormat,
                 32, 32, 0, PixelFormat.Rgb, PixelType.Float, IntPtr.Zero);
             }
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            
+            SetParametersImage();
 
-            GL.GenerateMipmap(GenerateMipmapTarget.TextureCubeMap);
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, captureFrameBO);
             GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, captureRenderBO);
             GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferStorage.DepthComponent24, 32, 32);
 
             irradianceShader.Use();
-            irradianceShader.SetMatrix4("projection", captureProjection);
+            irradianceShader.SetUniform("projection", captureProjection);
             GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.TextureCubeMap, TexturesCBMaps.Background_CB_Map);
-            irradianceShader.SetTexture("environmentMap", 0);
+            GL.BindTexture(TextureTarget.TextureCubeMap, _textures_cb_maps.Background_CB_Map);
+            irradianceShader.SetUniform("environmentMap", 0);
 
             GL.Viewport(0, 0, 32, 32);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, captureFrameBO);
             for(int i = 0; i < 6; i++)
             {
-                irradianceShader.SetMatrix4("view", captureViews[i]);
+                irradianceShader.SetUniform("view", captureViews[i]);
                 GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, 
-                    TextureTarget.TextureCubeMapPositiveX + i, TexturesCBMaps.Irradiance_CB_Map, 0);
+                    TextureTarget.TextureCubeMapPositiveX + i, _textures_cb_maps.Irradiance_CB_Map, 0);
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
                 RenderCube();
@@ -178,27 +178,22 @@ namespace MyGame
         // ---------------------------------------------
         private void PreFilter()
         {
-            TexturesCBMaps.PreFilter_CB_Map = GL.GenTexture();
-            GL.BindTexture(TextureTarget.TextureCubeMap, TexturesCBMaps.PreFilter_CB_Map);
+            _textures_cb_maps.PreFilter_CB_Map = GL.GenTexture();
+            GL.BindTexture(TextureTarget.TextureCubeMap, _textures_cb_maps.PreFilter_CB_Map);
             for(int i = 0; i < 6; i++)
             {
                 GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + i, 0, internalFormat,
                 128, 128, 0, PixelFormat.Rgb, PixelType.Float, IntPtr.Zero);
             }
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
-            // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
-            GL.GenerateMipmap(GenerateMipmapTarget.TextureCubeMap);
+            SetParametersImage(TextureMinFilter.LinearMipmapLinear);
+
 
             prefilterShader.Use();
-            prefilterShader.SetMatrix4("projection", captureProjection);
+            prefilterShader.SetUniform("projection", captureProjection);
             GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.TextureCubeMap, TexturesCBMaps.Background_CB_Map);
-            irradianceShader.SetTexture("environmentMap", 0);
+            GL.BindTexture(TextureTarget.TextureCubeMap, _textures_cb_maps.Background_CB_Map);
+            irradianceShader.SetUniform("environmentMap", 0);
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, captureFrameBO);
             int maxMipLevels = 5;
@@ -212,12 +207,12 @@ namespace MyGame
                 GL.Viewport(0, 0, mipWidth, mipHeight);
 
                 float roughness = (float)mip / (float)(maxMipLevels - 1);
-                prefilterShader.SetFloat("roughness", roughness);
+                prefilterShader.SetUniform("roughness", roughness);
                 for(int i = 0; i < 6; i++)
                 {
-                    prefilterShader.SetMatrix4("view", captureViews[i]);
+                    prefilterShader.SetUniform("view", captureViews[i]);
                     GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, 
-                                            TextureTarget.TextureCubeMapPositiveX + i, TexturesCBMaps.PreFilter_CB_Map, mip);
+                                            TextureTarget.TextureCubeMapPositiveX + i, _textures_cb_maps.PreFilter_CB_Map, mip);
 
                     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
@@ -226,19 +221,30 @@ namespace MyGame
             }
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         }
+        private void SetParametersImage(TextureMinFilter param = TextureMinFilter.Linear)
+        {
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)param);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
+            GL.GenerateMipmap(GenerateMipmapTarget.TextureCubeMap);
+        }
         public void RenderFrame()
         {
 
             backgroundShader.Use();
-            backgroundShader.SetMatrix4("projection", Camera.ProjectionMatrix);
-            backgroundShader.SetMatrix4("view", Camera.ViewMatrix);
+            backgroundShader.SetUniform("projection", Camera.ProjectionMatrix);
+            backgroundShader.SetUniform("view", Camera.ViewMatrix);
             
-            backgroundShader.SetFloat("gamma", Values.gammaBackground);
             GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.TextureCubeMap, TexturesCBMaps.Background_CB_Map);
-            backgroundShader.SetTexture("environmentMap", 0);
+            GL.BindTexture(TextureTarget.TextureCubeMap, _textures_cb_maps.Background_CB_Map);
+            backgroundShader.SetUniform("environmentMap", 0);
 
-            backgroundShader.SetBool("customTexture", CustomTexture);
+            backgroundShader.SetUniform("gamma", Values.gammaBackground);
+
 
             GL.Disable(EnableCap.CullFace);
             GL.DepthFunc(DepthFunction.Lequal);
@@ -257,7 +263,6 @@ namespace MyGame
                 DefaultCube.RenderCube();
             }
         }
-        public void UpdateFrame() { }
         public void Dispose()
         {
             equirectangularToCubemapShader.Dispose();
@@ -270,20 +275,20 @@ namespace MyGame
             GL.DeleteRenderbuffer(captureRenderBO);
 
             GL.DeleteTexture(HDR_Texture);
-            GL.DeleteTexture(TexturesCBMaps.Background_CB_Map);
-            GL.DeleteTexture(TexturesCBMaps.Irradiance_CB_Map);
-            GL.DeleteTexture(TexturesCBMaps.PreFilter_CB_Map);
+            GL.DeleteTexture(_textures_cb_maps.Background_CB_Map);
+            GL.DeleteTexture(_textures_cb_maps.Irradiance_CB_Map);
+            GL.DeleteTexture(_textures_cb_maps.PreFilter_CB_Map);
 
             DefaultCube.Dispose();
             CustomCube.Dispose();
         }
         private struct DefaultCube
         {
-            private static int cubeVAO;
-            private static int cubeVBO;
+            private static VertexArrayObject ?Vao;
+            private static BufferObject<float> ?vbo;
             public  static void RenderCube()
             {
-                if (cubeVAO == 0)
+                if (Vao == null)
                 {
                     float[] vertices = 
                     {
@@ -326,39 +331,31 @@ namespace MyGame
                         -1.0f,  1.0f,  1.0f,    0.0f,  1.0f,     0.0f, 0.0f, 0.0f       
                     };
 
-                    cubeVAO = GL.GenVertexArray();
-                    GL.BindVertexArray(cubeVAO);
+                    Vao = new VertexArrayObject();
+                    vbo = new BufferObject<float>(vertices, BufferTarget.ArrayBuffer);
 
-                    cubeVBO = GL.GenBuffer();
-                    GL.BindBuffer(BufferTarget.ArrayBuffer, cubeVBO);
-                    GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
-
-                    GL.EnableVertexAttribArray(0);
-                    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
-
-                    GL.EnableVertexAttribArray(1);
-                    GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
-
-                    GL.EnableVertexAttribArray(2);
-                    GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
+                    Vao.LinkBufferObject(ref vbo);
+                    Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 8, 0);
+                    Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, 8, 3);
+                    Vao.VertexAttributePointer(2, 2, VertexAttribPointerType.Float, 8, 6);
                 }
                 // render DefaultCube
-                GL.BindVertexArray(cubeVAO);
+                Vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
             }
             public static void Dispose()
             {
-                GL.DeleteVertexArray(cubeVAO);
-                GL.DeleteBuffer(cubeVBO);
+                vbo!.Dispose();
+                Vao!.Dispose();
             }
         }
         private struct CustomCube
         {
-            private static int cubeVAO;
-            private static int cubeVBO;
+            private static VertexArrayObject ?Vao;
+            private static BufferObject<float> ?vbo;
             public static void RenderCube()
             {
-                if (cubeVAO == 0)
+                if (Vao == null)
                 {
                     float[] vertices = 
                     {
@@ -402,30 +399,23 @@ namespace MyGame
 
                     };
 
-                    cubeVAO = GL.GenVertexArray();
-                    GL.BindVertexArray(cubeVAO);
+                    Vao = new VertexArrayObject();
+                    vbo = new BufferObject<float>(vertices, BufferTarget.ArrayBuffer);
 
-                    cubeVBO = GL.GenBuffer();
-                    GL.BindBuffer(BufferTarget.ArrayBuffer, cubeVBO);
-                    GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+                    Vao.LinkBufferObject(ref vbo);
+                    Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 8, 0);
+                    Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, 8, 3);
+                    Vao.VertexAttributePointer(2, 2, VertexAttribPointerType.Float, 8, 6);
 
-                    GL.EnableVertexAttribArray(0);
-                    GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
-
-                    GL.EnableVertexAttribArray(1);
-                    GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
-
-                    GL.EnableVertexAttribArray(2);
-                    GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
                 }
-                // render CustomCube
-                GL.BindVertexArray(cubeVAO);
+
+                Vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
             }
             public static void Dispose()
             {
-                GL.DeleteVertexArray(cubeVAO);
-                GL.DeleteBuffer(cubeVBO);
+                vbo!.Dispose();
+                Vao!.Dispose();
             }
         }
     }

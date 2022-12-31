@@ -41,8 +41,8 @@ namespace MyGame
 
                                         FragColor = color * tex;
 
-                                        // if(FragColor.a < 0.1)
-                                        //     discard;
+                                        if(FragColor.a < 0.1)
+                                            discard;
                                     }";
             Shader = new ShaderProgram(vertex_shader, frag_shader);
             Sprite = TextureProgram.Load(fileTexture);
@@ -52,7 +52,7 @@ namespace MyGame
         {
             Shader.Use();
             Sprite.Use(TextureUnit.Texture0);
-            Shader.SetTexture("mytexture", 0);
+            Shader.SetUniform("mytexture", 0);
 
             var model = Matrix4.Identity;
 
@@ -63,9 +63,9 @@ namespace MyGame
 
             var Projection = Matrix4.CreateOrthographicOffCenter(-2.0f, 2.0f, -2.0f, 2.0f, 0.0f, 1.0f);
 
-            Shader.SetMatrix4("model", model);
-            Shader.SetMatrix4("projection", Projection);
-            Shader.SetColor4("color", Values.crosshairColor);
+            Shader.SetUniform("model", model);
+            Shader.SetUniform("projection", Projection);
+            Shader.SetUniform("color", Values.crosshairColor);
 
             Quad.RenderQuad();
         }

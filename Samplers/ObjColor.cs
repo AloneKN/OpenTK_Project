@@ -7,25 +7,24 @@ namespace MyGame
     public class ObjColor : IDisposable
     {
         private ShaderProgram Shader;
-        private Directions directions;
         public ObjColor()
         {
             Shader = new ShaderProgram("GLSL/Color/color.vert", "GLSL/Color/color.frag");
-            directions = new Directions(3.5f, 1.0f, 0.002f, 0.002f);
         }
         public void RenderFrame()
         {
             Shader.Use();
             
             Matrix4 model = Matrix4.Identity;
-            model = model * Matrix4.CreateScale(0.5f);
+            model = model * Matrix4.CreateScale(1.0f);
             model = model * Matrix4.CreateTranslation(Game.LuzPosition);
 
-            Shader.SetMatrix4("model", model);
-            Shader.SetMatrix4("view", Camera.ViewMatrix);
-            Shader.SetMatrix4("projection", Camera.ProjectionMatrix);
+            Shader.SetUniform("model", model);
+            Shader.SetUniform("view", Camera.ViewMatrix);
+            Shader.SetUniform("projection", Camera.ProjectionMatrix);
 
-            Shader.SetColor4("color", Values.lightColor);
+            Shader.SetUniform("color", Values.lightColor / 255f);
+            Shader.SetUniform("LightDiffuse", Values.LightDiffuse);
 
             Sphere.RenderSphere();
             

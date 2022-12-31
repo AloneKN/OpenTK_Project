@@ -4,22 +4,13 @@ using OpenTK.Mathematics;
 
 namespace MyGame
 {
-    struct BuffersVertex
+    public struct Vertex
     {
-        public int vertexArrayObject, verticesBuffer, elementBuffer;
-        public BuffersVertex()
-        {
-            vertexArrayObject = GL.GenVertexArray();
-            verticesBuffer = GL.GenBuffer();
-            elementBuffer = GL.GenBuffer();
-        }
-        public void Dispose()
-        {
-            GL.DeleteBuffer(verticesBuffer);
-            GL.DeleteBuffer(elementBuffer);
-
-            GL.DeleteVertexArray(vertexArrayObject);
-        }
+        public Vector3 Positions;
+        public Vector3 Normals;
+        public Vector2 TexCoords;
+        public Vector3 Tangents;
+        public Vector3 Bitangents;
     }
     public class ModelTexturesPath
     {
@@ -34,11 +25,15 @@ namespace MyGame
         public string _AmbientOcclusionPath = string.Empty;
     }
     
-    public class Meshe
+    public class Meshe : IDisposable
     {
-        private BuffersVertex buffers;
+        // private BuffersVertex buffers;
         private int indicesCount;
         public string DiffusePath, SpecularPath, NormalPath, HeightMap, MetallicPath, RoughnnesPath, LightMap, EmissivePath, AmbientOcclusionPath;
+        
+        private VertexArrayObject Vao;
+        private BufferObject<Vertex> Vbo;
+        private BufferObject<ushort> Ebo;
         public unsafe Meshe(List<Vertex> Vertices, List<ushort> Indices, ModelTexturesPath texturesPath)
         {
             indicesCount = Indices.Count;
@@ -53,48 +48,34 @@ namespace MyGame
 	        EmissivePath            =   texturesPath._EmissivePath;
             AmbientOcclusionPath    =   texturesPath._AmbientOcclusionPath;
 
-            buffers = new BuffersVertex();
+            Vao = new VertexArrayObject();
+            Vbo = new BufferObject<Vertex>(Vertices.ToArray(), BufferTarget.ArrayBuffer);
+            Vao.LinkBufferObject(ref Vbo);
 
-            GL.BindVertexArray(buffers.vertexArrayObject);
+            Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, sizeof(Vertex), IntPtr.Zero);
+            Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "Normals"));
+            Vao.VertexAttributePointer(2, 2, VertexAttribPointerType.Float, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "TexCoords"));
+            Vao.VertexAttributePointer(3, 3, VertexAttribPointerType.Float, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "Tangents"));
+            Vao.VertexAttributePointer(4, 3, VertexAttribPointerType.Float, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "Bitangents"));
 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, buffers.verticesBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, Vertices.ToArray().Length * sizeof(Vertex), Vertices.ToArray(), BufferUsageHint.StaticDraw);
-
-            // positions
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), 0);
-
-            // Normals
-            GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "Normals"));
-
-            // Tecoods
-            GL.EnableVertexAttribArray(2);
-            GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "TexCoords"));
-
-            // Tangents
-            GL.EnableVertexAttribArray(3);
-            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "Tangents"));
-
-            // Bitangents
-            GL.EnableVertexAttribArray(4);
-            GL.VertexAttribPointer(4, 3, VertexAttribPointerType.Float, false, sizeof(Vertex), Marshal.OffsetOf(typeof(Vertex), "Bitangents"));
-
-
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, buffers.elementBuffer);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, Indices.ToArray().Length * sizeof(ushort), Indices.ToArray(), BufferUsageHint.StaticDraw);
+            Ebo = new BufferObject<ushort>(Indices.ToArray(), BufferTarget.ElementArrayBuffer);
+            Vao.LinkBufferObject(ref Ebo);
 
             Vertices.Clear();
             Indices.Clear();
+
         }
         public void RenderFrame()
         {
-            GL.BindVertexArray(buffers.vertexArrayObject);
+            Vao.Bind();
             GL.DrawElements(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, indicesCount, DrawElementsType.UnsignedShort, 0);
         }
         public void Dispose()
         {
-            buffers.Dispose();
+            Vao.Dispose();
+            Vbo.Dispose();
+            Ebo.Dispose();
+            
         }
         public void PrintTexturesMap()
         {

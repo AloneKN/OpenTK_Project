@@ -91,7 +91,7 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }   
 // ----------------------------------------------------------------------------
-vec3 elimineAlhpa(sampler2D tex)
+vec3 elimineAlpha(sampler2D tex)
 {
     vec4 TextureAlpha = texture(tex, TexCoords);
     if(TextureAlpha.a <= 0.1)
@@ -101,18 +101,54 @@ vec3 elimineAlhpa(sampler2D tex)
 // ----------------------------------------------------------------------------
 vec3 EmissiveBloom(vec3 emissive)
 {
-    if(emissive.rgb == vec3(0.1) ) discard;
-    
-    emissive = emissive * emissiveStrength.x;
-    return emissive;
+    return emissive * emissiveStrength;
 }
 // ----------------------------------------------------------------------------
+
+// vec3 Nitidez()
+// {
+//     float offset = nitidezStrength / 300.0;
+
+//     vec2 offsets[9] = vec2[](
+//         vec2(-offset,  offset), // top-left
+//         vec2( 0.0f,    offset), // top-center
+//         vec2( offset,  offset), // top-right
+//         vec2(-offset,  0.0f),   // center-left
+//         vec2( 0.0f,    0.0f),   // center-center
+//         vec2( offset,  0.0f),   // center-right
+//         vec2(-offset, -offset), // bottom-left
+//         vec2( 0.0f,   -offset), // bottom-center
+//         vec2( offset, -offset)  // bottom-right    
+//     );
+
+//     float kernel[9] = float[](
+//         -1, -1, -1,
+//         -1,  9, -1,
+//         -1, -1, -1
+//     );
+    
+//     vec3 sampleTex[9];
+//     for(int i = 0; i < 9; i++)
+//     {
+//         vec3 hdrColor = vec3(texture(scene, TexCoords.st + offsets[i]));
+
+//         sampleTex[i] = mix(hdrColor, bloomColor, bloomStrength); // linear interpolation
+
+//     }
+//     vec3 col = vec3(0.0);
+//     for(int i = 0; i < 9; i++)
+//         col += sampleTex[i] * kernel[i];
+    
+//     return col;
+
+// }
+//----------------------------------------------------------------
 void main()
 {		
     // material properties
-    vec3 albedo = pow(elimineAlhpa(AlbedoMap), vec3(2.2));
+    vec3 albedo = pow(elimineAlpha(AlbedoMap), vec3(2.2));
 
-    vec3 emissive = elimineAlhpa(EmissiveMap);
+    vec3 emissive = elimineAlpha(EmissiveMap);
 
     float metallic = texture(AmbienteRoughnessMetallic, TexCoords).b;
     float roughness = texture(AmbienteRoughnessMetallic, TexCoords).g;
@@ -193,9 +229,11 @@ void main()
     // HDR tonemapping
     color = color / (color + vec3(1.0));
 
-    color = color + EmissiveBloom(emissive);
     // gamma correct
     color = pow(color, vec3(1.0/gamma)); 
+
+
+    color = color + EmissiveBloom(emissive);
 
     FragColor = vec4(color , 1.0);
 }

@@ -6,7 +6,7 @@ namespace MyGame
     {
         public static float Time        { get; private set; } = 0.0f;
         public static float ElapsedTime { get; private set; } = 0.0f;
-        public static float Frames      { get; private set; } = 0.0f;
+        public static float FramesForSecond      { get; private set; } = 0.0f;
         
         private static double previousTime = 0.0, frameCount = 0.0;
         public static void TimerUpdateFrame(FrameEventArgs eventArgs)
@@ -17,7 +17,7 @@ namespace MyGame
             frameCount++;
             if(Time - previousTime >= 1.0)
             {
-                Frames = (float)frameCount;
+                FramesForSecond = (float)frameCount;
                 frameCount = 0;
                 previousTime = Time;
             }

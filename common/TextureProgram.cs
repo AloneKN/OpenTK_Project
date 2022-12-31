@@ -23,8 +23,6 @@ namespace MyGame
                     
                 GL.TexImage2D(TextureTarget.Texture2D, 0, pixelFormat, 
                     image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image.Data);
-                // GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.SrgbAlpha, 
-                //     image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image.Data);
             }
 
 
@@ -53,3 +51,5 @@ namespace MyGame
         }
     }
 }
+
+

@@ -5,7 +5,7 @@ using OpenTK.Windowing.Desktop;
 
 namespace MyGame
 {
-    public class Outdoor : IDisposable
+    public class Outdoor
     {
         private ShaderProgram shader;
         private TextureProgram texture; 
@@ -14,32 +14,26 @@ namespace MyGame
             string vertex_shader = @"
                                     #version 460 core
 
-                                    layout(location = 0) in vec3 squareVertices;
+                                    layout(location = 0) in vec3 aPos;
                                     layout(location = 1) in vec2 aTexCoords;
 
                                     out vec2 TexCoords;
 
                                     uniform vec3 CameraRight;
                                     uniform vec3 CameraUp;
-                                    uniform vec3 Position;
-                                    uniform vec2 Size;
 
                                     uniform mat4 projection;
                                     uniform mat4 view;
+                                    uniform mat4 model;
 
                                     void main()
                                     {
-                                        vec3 particleCenter_wordspace = Position;
-                                        
-                                        vec3 vertexPosition_worldspace = 
-                                            particleCenter_wordspace
-                                            + CameraRight * squareVertices.x * Size.x
-                                            + CameraUp * squareVertices.y * Size.y;
-
-
-                                        gl_Position = vec4(vertexPosition_worldspace, 1.0) * view * projection;
-
                                         TexCoords = aTexCoords;
+
+                                        vec3 vertexPosition = CameraRight * aPos.x + CameraUp * aPos.y;
+
+                                        gl_Position = vec4(vertexPosition, 1.0) * model * view * projection;
+
                                     }";
             string frag_shader = @"
                                     #version 460 core
@@ -62,30 +56,22 @@ namespace MyGame
         }
         public Vector3 position = Vector3.Zero;
         public Vector2 scale = Vector2.Zero;
-        public void RenderFrame(Vector3 position, Vector2 scale)
+        public void RenderFrame(Matrix4 model)
         {
 
             shader.Use();
             texture.Use(TextureUnit.Texture0);
-            shader.SetTexture("imagem", 0);
+            shader.SetUniform("imagem", 0);
 
 
-            shader.SetVector3("CameraRight", Camera.Right);
-            shader.SetVector3("CameraUp", Camera.Up);
+            shader.SetUniform("CameraRight", Camera.Right);
+            shader.SetUniform("CameraUp", Camera.Up);
+            shader.SetUniform("model", model);
 
-            shader.SetVector3("Position", position);
-            shader.SetVector2("Size", scale);
-
-            shader.SetMatrix4("view", Camera.ViewMatrix);
-            shader.SetMatrix4("projection", Camera.ProjectionMatrix);
+            shader.SetUniform("view", Camera.ViewMatrix);
+            shader.SetUniform("projection", Camera.ProjectionMatrix);
 
             Quad.RenderQuad();
-        }
-        public void Dispose()
-        {
-
-            shader.Dispose();
-            texture.Dispose();
         }
     }
 }

@@ -102,13 +102,13 @@ namespace MyGame
             GL.EnableVertexAttribArray(0);
             GL.VertexAttribPointer(0, 4, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
         }
-        public void RenderText(string text, Vector2 position, float scale, Color4 color)
+        public void RenderText(string text, Vector2 position, float scale, System.Numerics.Vector4 color)
         {
             GL.BindVertexArray(Vao);
             shaderFonts.Use();
             Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0.0f, Program.Size.X, 0.0f, Program.Size.Y, 0.0f, 1.0f);
-            shaderFonts.SetMatrix4("projection", projection);
-            shaderFonts.SetColor4("textColor", color);
+            shaderFonts.SetUniform("projection", projection);
+            shaderFonts.SetUniform("textColor", color);
             
 
             foreach(var c in text)
@@ -137,7 +137,7 @@ namespace MyGame
                 };
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, ch.TextureID);
-                shaderFonts.SetTexture("text", 0);
+                shaderFonts.SetUniform("text", 0);
 
                 GL.BindBuffer(BufferTarget.ArrayBuffer, Vbo);
                 GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, vertices.Length * sizeof(float), vertices);

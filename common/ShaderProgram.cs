@@ -7,59 +7,90 @@ namespace MyGame
     {
         private readonly int Handle;
         private readonly Dictionary<string, int> uniformLocations;
-        public ShaderProgram(string vertFile, string fragFile)
+        private string CurrentShader = string.Empty;
+        public ShaderProgram(string vertFile, string fragFile, string geomFile = "")
         {
-
-            int vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-
-            if(File.Exists(vertFile))
-            {
-                GL.ShaderSource(vertexShader, File.ReadAllText(vertFile));
-                GL.ShaderSource(fragmentShader, File.ReadAllText(fragFile));
-            }
-            else
-            {
-                GL.ShaderSource(vertexShader, vertFile);
-                GL.ShaderSource(fragmentShader, fragFile);
-            }
-
-            CompileShader(vertexShader);
-            CompileShader(fragmentShader);
+            CurrentShader = $"{vertFile} {fragFile} {geomFile}";
 
             Handle = GL.CreateProgram();
 
-            GL.AttachShader(Handle, vertexShader);
-            GL.AttachShader(Handle, fragmentShader);
+            int vertShader = CreateShader(vertFile, ShaderType.VertexShader);
+            int fragShader = CreateShader(fragFile, ShaderType.FragmentShader);
 
-            LinkProgram(Handle);
+            GL.AttachShader(Handle, vertShader);
+            GL.AttachShader(Handle, fragShader);
 
-            // Desanexar os shaders
-            GL.DetachShader(Handle, vertexShader);
-            GL.DetachShader(Handle, fragmentShader);
-            GL.DeleteShader(fragmentShader);
-            GL.DeleteShader(vertexShader);
+            int geomShader = 0;
+            if(geomFile != string.Empty)
+            {
+                geomShader = CreateShader(geomFile, ShaderType.GeometryShader);
+                GL.AttachShader(Handle, geomShader);
+            }
 
+            GL.LinkProgram(Handle);
 
-            // Em seguida, aloque o dicionário para armazenar os locais.
-            GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
+            GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out var code);
+            if (code != (int)All.True)
+            {
+                throw new Exception($"Ocorreu um erro ao vincular o programa \n{CurrentShader} \n{GL.GetShaderInfoLog(Handle)}");
+            }
 
-            
+            // Desanexar os shaders, e depois o apague-os
+            DetachDeleteShaders(vertShader);
+            DetachDeleteShaders(fragShader);
+            if(geomShader != 0)
+            {
+                DetachDeleteShaders(geomShader);
+            }
+
+            // aloque o dicionário para armazenar todos os uniforms.GL.GetUniformLocation(Handle, nome)new Dictionary<string, int>();
             uniformLocations = new Dictionary<string, int>();
 
-            // Faz um loop em todos os uniformes,
+            // verfificamos a quantidade de uniforms que o shader possui
+            GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
+            
+            // realizamos um loop em todos os uniformes,
             for (var i = 0; i < numberOfUniforms; i++)
             {
-                var key = GL.GetActiveUniform(Handle, i, out _, out _);
+                string key = GL.GetActiveUniform(Handle, i, out var size, out _);
 
-                var location = GL.GetUniformLocation(Handle, key);
+                if(size > 1)
+                {
+                    // opengl não armazena o nome dos uniforms de arrays, por isso devemos setar os nomes de arrays manualmente.
+                    // vou tentar explicar de uma forma melhor.
+                    // imagine o seguinte uniform colors[4], o opegl não ira armazenar todos esses arrays, ele ira armazenar apenas  
+                    // uniform colors[0], por isso devemos manualmente incrementar color[1], color[2], color[3] e color[4] em nosso dicionario.
 
-                uniformLocations.Add(key, location);
+                    for(int j = 0; j < size; j++)
+                    {
+                        var keyArray = key.Substring(0, key.Length - 2) + $"{j}]";
+
+                        var location = GL.GetUniformLocation(Handle, keyArray);
+                        uniformLocations.Add(keyArray, location);
+                    }
+                }
+                else
+                {
+                    var location = GL.GetUniformLocation(Handle, key);
+                    uniformLocations.Add(key, location);
+                    
+                }
             }
         }
-        private void CompileShader(int shader)
+        private int CreateShader(string shaderCode, ShaderType type)
         {
-            // Tenta compilar o shader
+            int shader = GL.CreateShader(type);
+
+            if(File.Exists(shaderCode))
+            {
+                GL.ShaderSource(shader, File.ReadAllText(shaderCode));
+            }
+            else
+            {
+                GL.ShaderSource(shader, shaderCode);
+            }
+
+            // compila o shader
             GL.CompileShader(shader);
 
             // Verifica se há erros de compilação
@@ -67,70 +98,64 @@ namespace MyGame
             
             if (code != (int)All.True)
             {
-                throw new Exception($"Ocorreu um erro ao compilar o programa.{GL.GetShaderInfoLog(shader)}");
+                throw new Exception($"Ocorreu um erro ao compilar o programa \n{CurrentShader} \n{GL.GetShaderInfoLog(shader)}");
             }
-        }
-        private void LinkProgram(int program)
-        {
-            GL.LinkProgram(program);
 
-            GL.GetProgram(program, GetProgramParameterName.LinkStatus, out var code);
-            if (code != (int)All.True)
-            {
-                throw new Exception($"Ocorreu um erro ao vincular o programa ({GL.GetShaderInfoLog(program)})");
-            }
+
+            return shader;
+        }
+        private void DetachDeleteShaders(int shader)
+        {
+            GL.DetachShader(Handle, shader);
+            GL.DeleteShader(shader);
         }
         public void Use()
         {
             GL.UseProgram(Handle);
         }
+        public void Dispose()
+        {
+            GL.DeleteProgram(Handle);
+        }
         public int GetAttribLocation(string attribName)
         {
             return GL.GetAttribLocation(Handle, attribName);
         }
-        public void SetInt(string nome, int dados)
-        {
-            GL.Uniform1(uniformLocations[nome], dados);
-        }
-        public void SetBool(string nome, bool dados)
+        public void SetUniform(string nome, bool dados)
         {
             GL.Uniform1(uniformLocations[nome], (dados ? 1 : 0));
         }
-        public void SetTexture(string nome, int dados)
+        public void SetUniform(string nome, int dados)
         {
             GL.Uniform1(uniformLocations[nome], dados);
         }
-        public void SetFloat(string nome, float dados)
+        public void SetUniform(string nome, float dados)
         {
             GL.Uniform1(uniformLocations[nome], dados);
         }
-        public void SetMatrix4(string nome, Matrix4 dados)
+        public void SetUniform(string nome, Matrix4 dados)
         {
             GL.UniformMatrix4(uniformLocations[nome], true, ref dados);
         }
-        public void SetVector2(string nome, Vector2 dados)
+        public void SetUniform(string nome, Vector2 dados)
         {
             GL.Uniform2(uniformLocations[nome], dados);
         }
-        public void SetVector3(string nome, Vector3 dados)
+        public void SetUniform(string nome, Vector3 dados)
         {
             GL.Uniform3(uniformLocations[nome], dados);
         }
-        public void SetVector4(string nome, Vector4 dados)
+        public void SetUniform(string nome, Vector4 dados)
         {
             GL.Uniform4(uniformLocations[nome], dados);
         }
-        public void SetColor4(string nome, Color4 dados)
+        public void SetUniform(string nome, Color4 dados)
         {
             GL.Uniform4(uniformLocations[nome], dados);
         }
-        public void SetColor4(string nome, System.Numerics.Vector4 dados)
+        public void SetUniform(string nome, System.Numerics.Vector4 dados)
         {
             GL.Uniform4(uniformLocations[nome], new Vector4(dados.X, dados.Y, dados.Z, dados.W));
-        }
-        public void Dispose()
-        {
-            GL.DeleteProgram(Handle);
         }
     }
 }

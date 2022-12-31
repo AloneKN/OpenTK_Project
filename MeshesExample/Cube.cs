@@ -4,11 +4,12 @@ namespace MyGame
 {
     public struct Cube
     {
-        private static int cubeVAO;
-        private static int cubeVBO;
+        private static VertexArrayObject ?Vao;
+        private static BufferObject<float> ?vbo;
+
         public  static void RenderCube()
         {
-            if (cubeVAO == 0)
+            if (Vao == null)
             {
                 float[] vertices = 
                 {
@@ -56,30 +57,23 @@ namespace MyGame
                     -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, 0.0f, 0.0f  // bottom-left     
                 };
 
-                cubeVAO = GL.GenVertexArray();
-                GL.BindVertexArray(cubeVAO);
+                Vao = new VertexArrayObject();
+                vbo = new BufferObject<float>(vertices, BufferTarget.ArrayBuffer);
 
-                cubeVBO = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ArrayBuffer, cubeVBO);
-                GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+                Vao.LinkBufferObject(ref vbo);
+                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 8, 0);
+                Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, 8, 3);
+                Vao.VertexAttributePointer(2, 2, VertexAttribPointerType.Float, 8, 6);
 
-                GL.EnableVertexAttribArray(0);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 0);
-
-                GL.EnableVertexAttribArray(1);
-                GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 8 * sizeof(float), 3 * sizeof(float));
-
-                GL.EnableVertexAttribArray(2);
-                GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, 8 * sizeof(float), 6 * sizeof(float));
             }
             // render Cube
-            GL.BindVertexArray(cubeVAO);
+            Vao.Bind();
             GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
         }
         public static void Dispose()
         {
-            GL.DeleteVertexArray(cubeVAO);
-            GL.DeleteBuffer(cubeVBO);
+            Vao!.Dispose();
+            vbo!.Dispose();
         }
     }
 }

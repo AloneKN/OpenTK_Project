@@ -3,13 +3,15 @@ using OpenTK.Mathematics;
 
 namespace MyGame
 {
-    public class Sphere : IDisposable
+    public class Sphere
     {
-        private static int sphereVAO, sphereVBO, sphereEBO;
+        private static VertexArrayObject ?Vao;
+        private static BufferObject<float> ?Vbo;
+        private static BufferObject<int> ?Ebo;
         private static int indexCount;
         public static void RenderSphere()
         {
-            if(sphereVAO == 0)
+            if(Vao == null)
             {
                 List<Vector3> positions = new List<Vector3>();
                 List<Vector2> uv = new List<Vector2>();
@@ -80,36 +82,21 @@ namespace MyGame
                     }
                 }
 
-                sphereVAO = GL.GenVertexArray();
-                GL.BindVertexArray(sphereVAO);
+                int stride = (3 + 2 + 3);
 
-                sphereVBO = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ArrayBuffer, sphereVBO);
-                GL.BufferData(BufferTarget.ArrayBuffer, data.Count * sizeof(float), data.ToArray(), BufferUsageHint.StaticDraw);
+                Vao = new VertexArrayObject();
+                Vbo = new BufferObject<float>(data.ToArray(), BufferTarget.ArrayBuffer);
+                Vao.LinkBufferObject(ref Vbo);
+                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, stride, 0);
+                Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, stride, 3);
+                Vao.VertexAttributePointer(2, 3, VertexAttribPointerType.Float, stride, 6);
 
-                int stride = (3 + 2 + 3) * sizeof(float);
-                GL.EnableVertexAttribArray(0);
-                GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, stride, 0);
-
-                GL.EnableVertexAttribArray(1);
-                GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, stride, 3 * sizeof(float));
-
-                GL.EnableVertexAttribArray(2);
-                GL.VertexAttribPointer(2, 2, VertexAttribPointerType.Float, false, stride, 6 * sizeof(float));
-
-                sphereEBO = GL.GenBuffer();
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, sphereEBO);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Count * sizeof(uint), indices.ToArray(), BufferUsageHint.StaticDraw);
+                Ebo = new BufferObject<int>(indices.ToArray(), BufferTarget.ElementArrayBuffer);
+                Vao.LinkBufferObject(ref Ebo);
             }
-            GL.BindVertexArray(sphereVAO);
-            GL.DrawElements(PrimitiveType.TriangleStrip, indexCount, DrawElementsType.UnsignedInt, 0);
-        }
-        public void Dispose()
-        {
-            GL.DeleteBuffer(sphereVBO);
-            GL.DeleteBuffer(sphereEBO);
 
-            GL.DeleteVertexArray(sphereVAO);
+            Vao!.Bind();
+            GL.DrawElements(PrimitiveType.TriangleStrip, indexCount, DrawElementsType.UnsignedInt, 0);
         }
     }
 }

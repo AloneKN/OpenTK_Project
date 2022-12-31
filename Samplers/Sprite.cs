@@ -109,18 +109,18 @@ namespace MyGame
             model = Matrix4.Identity;
             model = model * Matrix4.CreateScale(1.1f, 1.0f, 1.0f);
 
-            shader.SetMatrix4("model", model);
-            shader.SetMatrix4("view", Camera.ViewMatrix);
-            shader.SetMatrix4("projection", Camera.ProjectionMatrix);
+            shader.SetUniform("model", model);
+            shader.SetUniform("view", Camera.ViewMatrix);
+            shader.SetUniform("projection", Camera.ProjectionMatrix);
 
-            shader.SetVector3("lightPos", Game.LuzPosition);
-            shader.SetVector3("viewPos", Camera.Position);
+            shader.SetUniform("lightPos", Game.LuzPosition);
+            shader.SetUniform("viewPos", Camera.Position);
 
             DiffuseMap.Use(TextureUnit.Texture0);
-            shader.SetTexture("DiffuseMap", 0);
+            shader.SetUniform("DiffuseMap", 0);
 
             NormalMap.Use(TextureUnit.Texture1);
-            shader.SetTexture("NormalMap", 1);
+            shader.SetUniform("NormalMap", 1);
             
             GL.BindVertexArray(Vao);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 6);

@@ -4,7 +4,11 @@ out vec4 FragColor;
 
 uniform vec4 color;
 
+uniform float LightDiffuse;
+
 void main()
 {
-    FragColor = vec4(color / 255);
+    vec3 diffuse = LightDiffuse * color.rgb;
+
+    FragColor = vec4(color.rgb + diffuse, 1.0);
 }

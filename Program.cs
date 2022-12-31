@@ -20,9 +20,9 @@ namespace MyGame
         {
             window.Load += delegate
             {
-                DebugGL.StartGlobal();
+                // DebugGL.InitDebug();
 
-                DebugGL.InitDebug();
+                StartGlobal();
 
                 Imgui_controller = new ImGuiController(window.Size);
                 game = new Game();
@@ -102,7 +102,35 @@ namespace MyGame
             };
 
             window.Run();
+        }        
+        public static void StartGlobal()
+        {
+            // ativa o tete de profundidade(z_buffer), assim o OpenGL renderiza tudo de forma correta
+            // por padrao e gl_less
+            GL.Enable(EnableCap.DepthTest);
+            // GL.DepthFunc(DepthFunction.Less);
+            // GL.DepthFunc(DepthFunction.Lequal);
+
+            // nao renderiza o que esta atrás
+            // GL.Enable(EnableCap.CullFace);
+            
+            // ativando o espaço Srgb sobre texturas
+            GL.Enable(EnableCap.FramebufferSrgb);
+
+            // antialising
+            GL.Enable(EnableCap.Multisample);
+
+            // filtra as costuras dos cube maps
+            GL.Enable(EnableCap.TextureCubeMapSeamless);
+
+            // habilita o point size, isso tem efeito apenas no shader de geometria
+            GL.Enable(EnableCap.ProgramPointSize);
+
+            // ativando a opacidade no fragment shader
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+            
+            GL.ClearColor(Color4.Black);
         }
-        
     }
 }
