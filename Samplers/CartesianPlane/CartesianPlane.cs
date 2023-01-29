@@ -70,9 +70,9 @@ namespace MyGame
 
             GL.DrawArrays(PrimitiveType.LineLoop, 0, count);
 
-            Text.RenderText("X", new Vector2(30f, 100f), 0.5f, Color4.Red);
-            Text.RenderText("Y", new Vector2(30f, 75f), 0.5f, Color4.Blue);
-            Text.RenderText("Z", new Vector2(30f, 50f), 0.5f, Color4.Green);
+            Text.Write("X", new Vector2(30f, 100f), 0.5f, Color4.Red);
+            Text.Write("Y", new Vector2(30f, 75f), 0.5f, Color4.Blue);
+            Text.Write("Z", new Vector2(30f, 50f), 0.5f, Color4.Green);
         }
     }
 }

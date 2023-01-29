@@ -101,11 +101,11 @@ namespace MyGame
             Vao.VertexAttributePointer(0, 4, VertexAttribPointerType.Float, 4 * sizeof(float), 0);
 
         }
-        public static void RenderText(string text, Vector2 position, float scale, Color4 color4)
+        public static void Write(string text, Vector2 position, float scale, Color4 color4)
         {
             Render(text, position, scale, color4);
         }
-        public static void RenderText(string text, Vector2 position, float scale, System.Numerics.Vector4 color4)
+        public static void Write(string text, Vector2 position, float scale, System.Numerics.Vector4 color4)
         {
             Render(text, position, scale, new Color4(color4.X, color4.Y, color4.Z, color4.W));
         }

@@ -54,10 +54,10 @@ namespace MyGame
             crossHair.RenderFrame(Vector2.Zero, 0.03f);
 
 
-            Text.RenderText($"Frames: {TimerGL.FramesForSecond.ToString()}", new Vector2(10.0f, Program.Size.Y - 50.0f),
+            Text.Write($"Frames: {TimerGL.FramesForSecond.ToString()}", new Vector2(10.0f, Program.Size.Y - 50.0f),
                             0.45f, Values.fpsColor);
 
-            Text.RenderText($"Camera Position {Camera.Position}", new Vector2(100f, 40f), 0.5f, Color4.AliceBlue);
+            Text.Write($"Camera Position {Camera.Position}", new Vector2(100f, 40f), 0.5f, Color4.AliceBlue);
 
         }
         public void ResizedFrame()
