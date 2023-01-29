@@ -23,18 +23,13 @@ namespace MyGame
                 vbo = new BufferObject<float>(vertices, BufferTarget.ArrayBuffer);
                 Vao.LinkBufferObject(ref vbo);
 
-                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 5, 0);
-                Vao.VertexAttributePointer(1, 2, VertexAttribPointerType.Float, 5, 3);
+                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 5 * sizeof(float), 0 * sizeof(float));
+                Vao.VertexAttributePointer(1, 2, VertexAttribPointerType.Float, 5 * sizeof(float), 3 * sizeof(float));
             }
             // render Cube
             Vao.Bind();
             GL.DrawArrays(PrimitiveType.TriangleStrip, 0, 4);
         }
-        public void Dispose()
-        {
-
-            Vao!.Dispose();
-            vbo!.Dispose();
-        }
+        public static void Dispose() => Vao!.Dispose();
     }
 }

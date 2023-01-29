@@ -4,24 +4,47 @@ using StbImageSharp;
 
 namespace MyGame
 {
-    // Uma classe auxiliar, muito parecida com Shader, destinada a simplificar o carregamento de texturas.
     public class TextureProgram : IDisposable 
     {
-        private readonly int Handle;
-        public static TextureProgram Load(string path, PixelInternalFormat pixelFormat = PixelInternalFormat.Rgba)
+        private int Handle;
+        private Tuple<TextureUnit, int> ?Unit;
+        private PixelInternalFormat PixelInternFormat = PixelInternalFormat.SrgbAlpha;
+        private TextureUnit Textureunit = TextureUnit.Texture0;
+        public TextureProgram(string path)
+        {
+            Init(path);
+        }
+        public TextureProgram(string path, PixelInternalFormat pixelformat)
+        {
+            PixelInternFormat = pixelformat;
+            Init(path);
+        }
+        public TextureProgram(string path, TextureUnit unit)
+        {
+            Textureunit = unit;
+            Init(path);
+        }
+        public TextureProgram(string path, PixelInternalFormat pixelformat, TextureUnit unit)
+        {
+            PixelInternFormat = pixelformat; Textureunit = unit;
+            Init(path);
+        }
+        private void Init(string path)
         {
             if(!File.Exists(path))
                 throw new Exception($"Não foi possivel para encontrar a Textura: {path}");
 
-            int handle = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, handle);
+            Unit = new Tuple<TextureUnit, int>(Textureunit, getUnitInt(Textureunit));
+
+            Handle = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, Handle);
 
             StbImage.stbi_set_flip_vertically_on_load(1);
             using(Stream stream = File.OpenRead(path))
             {
                 ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
                     
-                GL.TexImage2D(TextureTarget.Texture2D, 0, pixelFormat, 
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternFormat, 
                     image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image.Data);
             }
 
@@ -34,21 +57,32 @@ namespace MyGame
 
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
-            return new TextureProgram(handle);
         }
-        public TextureProgram(int glHandle)
+        public int Use { get => _Use(); }
+        private int _Use()
         {
-            Handle = glHandle;
-        }
-        public void Use(TextureUnit unit)
-        {
-            GL.ActiveTexture(unit);
+
+            GL.ActiveTexture(Unit!.Item1);
             GL.BindTexture(TextureTarget.Texture2D, Handle);
+            return Unit.Item2;
+            
         }
-        public void Dispose()
+        private int getUnitInt(TextureUnit Textureunit)
         {
-            GL.DeleteTexture(Handle);
+            string unitNum = $"{Textureunit}";
+            switch(unitNum.Length)
+            {
+                case 8:
+                    return int.Parse(unitNum[(unitNum.Length - 1)..]);
+                
+                case 9:
+                    return int.Parse(unitNum[(unitNum.Length - 2)..]);
+
+                default:
+                    return 0;
+            }
         }
+        public void Dispose() => GL.DeleteTexture(Handle);
     }
 }
 

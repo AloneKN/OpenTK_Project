@@ -11,8 +11,8 @@ namespace MyGame
 {
     static class Window
     {
-        public static GameWindowSettings gws = new GameWindowSettings();
-        public static NativeWindowSettings nws = new NativeWindowSettings();
+        public static GameWindowSettings gws = GameWindowSettings.Default;
+        public static NativeWindowSettings nws = NativeWindowSettings.Default;
         static Window()
         {
             gws = GameWindowSettings.Default;
@@ -31,7 +31,7 @@ namespace MyGame
             nws.WindowState = WindowState.Normal;
             nws.Flags = ContextFlags.Debug;
 
-            using(Stream stream = File.OpenRead("Resources/img/quads.png"))
+            using(Stream stream = File.OpenRead("Resources/img/icon.png"))
             {
                 ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
                 nws.Icon = new WindowIcon( new Image(image.Width, image.Height, image.Data));

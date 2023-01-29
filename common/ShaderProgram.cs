@@ -110,52 +110,76 @@ namespace MyGame
             GL.DeleteShader(shader);
         }
         public void Use()
-        {
-            GL.UseProgram(Handle);
-        }
+        => GL.UseProgram(Handle);
+
         public void Dispose()
-        {
-            GL.DeleteProgram(Handle);
-        }
+        => GL.DeleteProgram(Handle);
+        
         public int GetAttribLocation(string attribName)
-        {
-            return GL.GetAttribLocation(Handle, attribName);
-        }
+        => GL.GetAttribLocation(Handle, attribName);
+        
         public void SetUniform(string nome, bool dados)
-        {
-            GL.Uniform1(uniformLocations[nome], (dados ? 1 : 0));
-        }
+        => GL.Uniform1(uniformLocations[nome], (dados ? 1 : 0));
+        
         public void SetUniform(string nome, int dados)
-        {
-            GL.Uniform1(uniformLocations[nome], dados);
-        }
+        => GL.Uniform1(uniformLocations[nome], dados);
+        
         public void SetUniform(string nome, float dados)
-        {
-            GL.Uniform1(uniformLocations[nome], dados);
-        }
-        public void SetUniform(string nome, Matrix4 dados)
-        {
-            GL.UniformMatrix4(uniformLocations[nome], true, ref dados);
-        }
+        => GL.Uniform1(uniformLocations[nome], dados);
+        
         public void SetUniform(string nome, Vector2 dados)
-        {
-            GL.Uniform2(uniformLocations[nome], dados);
-        }
+        => GL.Uniform2(uniformLocations[nome], dados);
+        
         public void SetUniform(string nome, Vector3 dados)
-        {
-            GL.Uniform3(uniformLocations[nome], dados);
-        }
+        => GL.Uniform3(uniformLocations[nome], dados);
+        
         public void SetUniform(string nome, Vector4 dados)
-        {
-            GL.Uniform4(uniformLocations[nome], dados);
-        }
+        => GL.Uniform4(uniformLocations[nome], dados);
+        
         public void SetUniform(string nome, Color4 dados)
-        {
-            GL.Uniform4(uniformLocations[nome], dados);
-        }
+        => GL.Uniform4(uniformLocations[nome], dados);
+        
+        public void SetUniform(string nome, Matrix4 dados)
+        => GL.UniformMatrix4(uniformLocations[nome], true, ref dados);
+        
+
+        //---------------------------------- System Numerics Values -----------------------------------
+        public void SetUniform(string nome, System.Numerics.Vector2 dados)
+        => GL.Uniform2(uniformLocations[nome], new Vector2(dados.X, dados.Y));
+        
+        public void SetUniform(string nome, System.Numerics.Vector3 dados)
+        => GL.Uniform3(uniformLocations[nome], new Vector3(dados.X, dados.Y, dados.Z));
+        
         public void SetUniform(string nome, System.Numerics.Vector4 dados)
+        => GL.Uniform4(uniformLocations[nome], new Vector4(dados.X, dados.Y, dados.Z, dados.W));
+        public void SetUniform(string nome, System.Numerics.Matrix4x4 dados)
         {
-            GL.Uniform4(uniformLocations[nome], new Vector4(dados.X, dados.Y, dados.Z, dados.W));
+            Matrix4 Matrix = new Matrix4(
+                dados.M11, dados.M12, dados.M13, dados.M14,
+                dados.M21, dados.M22, dados.M23, dados.M24,
+                dados.M31, dados.M32, dados.M33, dados.M34,
+                dados.M41, dados.M42, dados.M43, dados.M44);
+
+            GL.UniformMatrix4(uniformLocations[nome], true, ref Matrix);
         }
+
+        
+        //---------------------------------- Bullet Math Values -----------------------------------
+        public void SetUniform(string nome, BulletSharp.Math.Vector3 dados)
+        => GL.Uniform3(uniformLocations[nome], new Vector3((float)dados.X, (float)dados.Y, (float)dados.Z));
+        
+        public void SetUniform(string nome, BulletSharp.Math.Vector4 dados)
+        => GL.Uniform4(uniformLocations[nome], new Vector4((float)dados.X, (float)dados.Y, (float)dados.Z, (float)dados.W));
+        public void SetUniform(string nome, BulletSharp.Math.Matrix dados)
+        {
+            Matrix4 Matrix = new Matrix4(
+                (float)dados.M11, (float)dados.M12, (float)dados.M13, (float)dados.M14,
+                (float)dados.M21, (float)dados.M22, (float)dados.M23, (float)dados.M24,
+                (float)dados.M31, (float)dados.M32, (float)dados.M33, (float)dados.M34,
+                (float)dados.M41, (float)dados.M42, (float)dados.M43, (float)dados.M44);
+
+            GL.UniformMatrix4(uniformLocations[nome], true, ref Matrix);
+        }
+
     }
 }

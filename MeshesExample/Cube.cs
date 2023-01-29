@@ -7,7 +7,7 @@ namespace MyGame
         private static VertexArrayObject ?Vao;
         private static BufferObject<float> ?vbo;
 
-        public  static void RenderCube()
+        public  static void RenderCube(PrimitiveType type = PrimitiveType.Triangles)
         {
             if (Vao == null)
             {
@@ -61,19 +61,15 @@ namespace MyGame
                 vbo = new BufferObject<float>(vertices, BufferTarget.ArrayBuffer);
 
                 Vao.LinkBufferObject(ref vbo);
-                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 8, 0);
-                Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, 8, 3);
-                Vao.VertexAttributePointer(2, 2, VertexAttribPointerType.Float, 8, 6);
+                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, 8 * sizeof(float), 0 * sizeof(float));
+                Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, 8 * sizeof(float), 3 * sizeof(float));
+                Vao.VertexAttributePointer(2, 2, VertexAttribPointerType.Float, 8 * sizeof(float), 6 * sizeof(float));
 
             }
             // render Cube
             Vao.Bind();
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+            GL.DrawArrays(type, 0, 36);
         }
-        public static void Dispose()
-        {
-            Vao!.Dispose();
-            vbo!.Dispose();
-        }
+        public static void Dispose() => Vao!.Dispose();
     }
 }

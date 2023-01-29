@@ -20,31 +20,31 @@ namespace MyGame
         // Rotação ao redor do eixo X em (radianos)
         private static float _pitch;
         // Rotação em torno do eixo Y em (radianos). Sem isso, você começaria a girar 90 graus para a direita.
-        private static float _yaw = -MathHelper.PiOver2;
+        private static float _yaw = -OpenTK.Mathematics.MathHelper.PiOver2;
         // O campo de visão da câmera em (radianos)
-        private static float _fov = MathHelper.PiOver2;
+        private static float _fov = OpenTK.Mathematics.MathHelper.PiOver2;
 
         // Convertemos de graus para radianos assim que a propriedade é definida para melhorar o desempenho.
         public float Pitch
         {
-            get => MathHelper.RadiansToDegrees(_pitch);
+            get => OpenTK.Mathematics.MathHelper.RadiansToDegrees(_pitch);
             set
             {
                 // Fixamos o valor do pitch entre -89 e 89 para evitar que a câmera fique de cabeça para baixo 
                 // e um monte de "bugs" estranhos surgem quando você está usando ângulos de euler para rotação.
                 // Se você quiser ler mais sobre isso você pode tentar pesquisar um tópico chamado gimbal lock
-                var angle = MathHelper.Clamp(value, -89f, 89f);
-                _pitch = MathHelper.DegreesToRadians(angle);
+                var angle = OpenTK.Mathematics.MathHelper.Clamp(value, -89f, 89f);
+                _pitch = OpenTK.Mathematics.MathHelper.DegreesToRadians(angle);
                 UpdateVectors();
             }
         }
         // Convertemos de graus para radianos assim que a propriedade é definida para melhorar o desempenho.
         private float Yaw
         {
-            get => MathHelper.RadiansToDegrees(_yaw);
+            get => OpenTK.Mathematics.MathHelper.RadiansToDegrees(_yaw);
             set
             {
-                _yaw = MathHelper.DegreesToRadians(value);
+                _yaw = OpenTK.Mathematics.MathHelper.DegreesToRadians(value);
                 UpdateVectors();
             }
         }
@@ -52,11 +52,11 @@ namespace MyGame
         // Convertemos de graus para radianos assim que a propriedade é definida para melhorar o desempenho.
         private float Fov
         {
-            get => MathHelper.RadiansToDegrees(_fov);
+            get => OpenTK.Mathematics.MathHelper.RadiansToDegrees(_fov);
             set
             {
-                var angle = MathHelper.Clamp(value, 1f, 90f);
-                _fov = MathHelper.DegreesToRadians(angle);
+                var angle = OpenTK.Mathematics.MathHelper.Clamp(value, 1f, 90f);
+                _fov = OpenTK.Mathematics.MathHelper.DegreesToRadians(angle);
             }
         }
         // Esta função irá atualizar os vértices de direção usando alguns calculos matematicos.
@@ -80,11 +80,14 @@ namespace MyGame
         // -------------------------------------------------------------------------------------------------------------------------------
         // Esta é simplesmente a proporção da janela de visualização, usada para ordenar a matriz de projeção.
         private static float AspectRatio = Program.window.Size.X / (float)Program.window.Size.Y;
-
         // -------------------------------------------------------------------------------------------------------------------------------
+
         // Movimentação da camera no mundo
-        // São as posições da câmera, todas são estaticas pois so vamos ter uma camera,
+        // São as posições da câmera, e velocidade, todas são estaticas pois so vamos ter uma camera,
         // e também porque podemos acessar esses valores de qualquer lugar
+        public static float CameraSpeed { get; set;      } = 6.5f;
+        public static float MouseSensitivity  { get; set; } = 0.2f;
+        public static float DistanceOfView { get; private set; } = 1000f;
         public static Vector3 Position  { get; private set; }
         public static Vector3 Front     { get => _front; }
         public static Vector3 Up        { get => _up;    }
@@ -103,33 +106,31 @@ namespace MyGame
         // ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, 600f);
         public static Matrix4 ProjectionMatrix  
         { 
-            get => Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, 600f);
+            get => Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, DistanceOfView);
         }
-        public static float cameraSpeed { get; set;      } = 6.5f;
         private void KeysUpdatePosition()
         {
             var input = Program.window.IsKeyDown;
 
             // update a movimentação da camera
-            if(input(Keys.W)) Position += Front * cameraSpeed  * (float)Clock.ElapsedTime;
-            if(input(Keys.S)) Position -= Front * cameraSpeed  * (float)Clock.ElapsedTime;
-            if(input(Keys.A)) Position -= Right * cameraSpeed  * (float)Clock.ElapsedTime;
-            if(input(Keys.D)) Position += Right * cameraSpeed  * (float)Clock.ElapsedTime;
+            if(input(Keys.W)) Position += Front * CameraSpeed  * (float)TimerGL.ElapsedTime;
+            if(input(Keys.S)) Position -= Front * CameraSpeed  * (float)TimerGL.ElapsedTime;
+            if(input(Keys.A)) Position -= Right * CameraSpeed  * (float)TimerGL.ElapsedTime;
+            if(input(Keys.D)) Position += Right * CameraSpeed  * (float)TimerGL.ElapsedTime;
 
-            if(input(Keys.LeftShift) && input(Keys.W)) Position += Front * (cameraSpeed * 10 )* (float)Clock.ElapsedTime;
-            if(input(Keys.LeftShift) && input(Keys.S)) Position -= Front * (cameraSpeed * 10 )* (float)Clock.ElapsedTime;
+            if(input(Keys.LeftShift) && input(Keys.W)) Position += Front * (CameraSpeed * 10 )* (float)TimerGL.ElapsedTime;
+            if(input(Keys.LeftShift) && input(Keys.S)) Position -= Front * (CameraSpeed * 10 )* (float)TimerGL.ElapsedTime;
 
-            if(input(Keys.Space)) Position += Up * cameraSpeed * (float)Clock.ElapsedTime;
-            if(input(Keys.C))     Position -= Up * cameraSpeed * (float)Clock.ElapsedTime;
+            if(input(Keys.Space)) Position += Up * CameraSpeed * (float)TimerGL.ElapsedTime;
+            if(input(Keys.C))     Position -= Up * CameraSpeed * (float)TimerGL.ElapsedTime;
 
             
         }
         // --------------------------------------------------------------------------------------------------------------------------------
         // Movimentação da camera
+        // View camera update
         private bool firstMove = true;
         private Vector2 lastPos;
-        public static float mouseSensitivity  { get; set; } = 0.2f;
-        // View camera update
         private bool activeView = false;
         private void MouseUpdateView()
         {
@@ -154,8 +155,8 @@ namespace MyGame
                     var deltaY = mouse.Y - lastPos.Y;
                     lastPos = new Vector2(mouse.X, mouse.Y);
 
-                    Yaw += deltaX * mouseSensitivity;
-                    Pitch -= deltaY * mouseSensitivity;
+                    Yaw += deltaX * MouseSensitivity;
+                    Pitch -= deltaY * MouseSensitivity;
                 }
             }
         }

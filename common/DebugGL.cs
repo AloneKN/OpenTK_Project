@@ -9,7 +9,7 @@ namespace MyGame
         public static bool DebugInitiated { get; private set; } = false;
 
         /// <summary>
-        /// inicia o debug, ira printar no console o status atual.
+        /// Inicia o debug;
         /// </summary>
         public static void InitDebug()
         {
@@ -36,50 +36,26 @@ namespace MyGame
             
         }
         /// <summary>
-        /// função callback vai ser chamada toda vez que o opengl dar error
+        /// Função callback vai ser chamada toda vez que ocorre um erro.
         /// </summary>
         private static void Debug(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
         {
             // ignorar códigos de erro/aviso não significativos
             if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
+            Console.WriteLine("##################################################################");
             Console.WriteLine($"Debug message ( {id} ): {message} ");
-            Console.WriteLine("------------------------------------------------------------------------------------------");
-            switch (source)
-            {
-                case DebugSource.DebugSourceApi:             Console.WriteLine("Source: API");              break;
-                case DebugSource.DebugSourceWindowSystem:    Console.WriteLine("Source: Window System");    break;
-                case DebugSource.DebugSourceShaderCompiler:  Console.WriteLine("Source: Shader Compiler");  break;
-                case DebugSource.DebugSourceThirdParty:      Console.WriteLine("Source: Third Party");      break;
-                case DebugSource.DebugSourceApplication:     Console.WriteLine("Source: Application");      break;
-                case DebugSource.DebugSourceOther:           Console.WriteLine("Source: Other");            break;
 
-            };
+            var stringSource = $"{source}";
+            Console.WriteLine($"Sourcer: {stringSource[11..]}");
 
-            switch (type)
-            {
-                case DebugType.DebugTypeError:               Console.WriteLine("Type: Error");                  break;
-                case DebugType.DebugTypeDeprecatedBehavior:  Console.WriteLine("Type: Deprecated Behaviour");   break;
-                case DebugType.DebugTypeUndefinedBehavior:   Console.WriteLine("Type: Undefined Behaviour");    break;
-                case DebugType.DebugTypePortability:         Console.WriteLine("Type: Portability");            break;
-                case DebugType.DebugTypePerformance:         Console.WriteLine("Type: Performance");            break;
-                case DebugType.DebugTypeMarker:              Console.WriteLine("Type: Marker");                 break;
-                case DebugType.DebugTypePushGroup:           Console.WriteLine("Type: Push Group");             break;
-                case DebugType.DebugTypePopGroup:            Console.WriteLine("Type: Pop Group");              break;
-                case DebugType.DebugTypeOther:               Console.WriteLine("Type: Other");                  break;
+            var stringType = $"{type}";
+            Console.WriteLine($"Type: {stringType[9..]}");
 
-            };
+            var stringSeverity = $"{severity}";
+            Console.WriteLine($"Severity: {stringSeverity[13..]}");
 
-            switch (severity)
-            {
-                case DebugSeverity.DebugSeverityHigh:         Console.WriteLine("Severity: high");                  break;
-                case DebugSeverity.DebugSeverityMedium:       Console.WriteLine("Severity: medium");                break;
-                case DebugSeverity.DebugSeverityLow:          Console.WriteLine("Severity: low");                   break;
-                case DebugSeverity.DebugSeverityNotification: Console.WriteLine("Severity: notification");          break;
-
-            }
-
-            Console.WriteLine("------------------------------------------------------------------------------------------");
+            Console.WriteLine("##################################################################");
             Console.WriteLine();
         }
     }

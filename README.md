@@ -16,10 +16,12 @@ what has already been done:
 * A very conventional way to create CubeMaps through rectangular images.
 * Some example shaders that can be very useful.
 * And some more meshes to create rectangles, spheres and cubes.
+* now bloom Effect included.
 
 I hope this project is very useful for anyone to be able to deal with opentk, in the future I will implement new elements.
 
-Video Example: (https://www.youtube.com/watch?v=DZ6q1_Dccxs)
+This video was posted without bloom...
+Video Example: (https://www.youtube.com/watch?v=DZ6q1_Dccxs) 
 
 ********
 ### install

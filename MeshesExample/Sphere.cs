@@ -3,13 +3,13 @@ using OpenTK.Mathematics;
 
 namespace MyGame
 {
-    public class Sphere
+    public class Sphere : IDisposable
     {
         private static VertexArrayObject ?Vao;
         private static BufferObject<float> ?Vbo;
         private static BufferObject<int> ?Ebo;
         private static int indexCount;
-        public static void RenderSphere()
+        public static void RenderSphere(PrimitiveType type = PrimitiveType.Triangles)
         {
             if(Vao == null)
             {
@@ -18,8 +18,8 @@ namespace MyGame
                 List<Vector3> normals = new List<Vector3>();
                 List<int>    indices = new List<int>();
 
-                const int X_SEGMENTS = 64;
-                const int Y_SEGMENTS = 64;
+                const int X_SEGMENTS = 32;
+                const int Y_SEGMENTS = 32;
                 const float PI = 3.14159265359f;
 
 
@@ -60,6 +60,7 @@ namespace MyGame
                     }
                     oddRow = !oddRow;
                 }
+                
                 indexCount = indices.Count;
 
                 List<float> data = new List<float>();
@@ -82,21 +83,23 @@ namespace MyGame
                     }
                 }
 
+                // vertexPosition + texCoords + nomalsPositions
                 int stride = (3 + 2 + 3);
 
                 Vao = new VertexArrayObject();
                 Vbo = new BufferObject<float>(data.ToArray(), BufferTarget.ArrayBuffer);
                 Vao.LinkBufferObject(ref Vbo);
-                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, stride, 0);
-                Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, stride, 3);
-                Vao.VertexAttributePointer(2, 3, VertexAttribPointerType.Float, stride, 6);
+                Vao.VertexAttributePointer(0, 3, VertexAttribPointerType.Float, stride * sizeof(float), 0 * sizeof(float));
+                Vao.VertexAttributePointer(1, 3, VertexAttribPointerType.Float, stride * sizeof(float), 3 * sizeof(float));
+                Vao.VertexAttributePointer(2, 3, VertexAttribPointerType.Float, stride * sizeof(float), 6 * sizeof(float));
 
                 Ebo = new BufferObject<int>(indices.ToArray(), BufferTarget.ElementArrayBuffer);
                 Vao.LinkBufferObject(ref Ebo);
             }
 
             Vao!.Bind();
-            GL.DrawElements(PrimitiveType.TriangleStrip, indexCount, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(type, indexCount, DrawElementsType.UnsignedInt, 0);
         }
+        public void Dispose() => Vao!.Dispose();
     }
 }

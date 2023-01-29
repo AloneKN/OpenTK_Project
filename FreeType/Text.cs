@@ -1,11 +1,11 @@
 using FreeTypeSharp.Native;
 
-using OpenTK.Graphics.OpenGL;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace MyGame
 {
-    public class Text
+    public class Text : IDisposable
     {  
         private struct Character
         {
@@ -14,9 +14,10 @@ namespace MyGame
             public Vector2i Bearing;
             public int Advance;
         }
-        private int Vao, Vbo;
-        private ShaderProgram shaderFonts;
-        private Dictionary<uint, Character> characteres = new Dictionary<uint, Character>();
+        private static VertexArrayObject ?Vao;
+        private static BufferObject<float> ?Vbo;
+        private static ShaderProgram ?shaderFonts;
+        private static Dictionary<uint, Character> characteres = new Dictionary<uint, Character>();
         public Text(string fontePath)
         {
             string vert_shader = @" #version 460 core
@@ -38,12 +39,12 @@ namespace MyGame
                                     in vec2 TexCoords;
                                     out vec4 FragColor;
 
-                                    uniform sampler2D text;
+                                    uniform sampler2D textureText;
                                     uniform vec4 textColor;
 
                                     void main()
                                     {    
-                                        vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, TexCoords).r);
+                                        vec4 sampled = vec4(1.0, 1.0, 1.0, texture(textureText, TexCoords).r);
                                         FragColor = textColor * sampled;
                                         if(FragColor.a <= 0.1)
                                             discard;
@@ -51,30 +52,30 @@ namespace MyGame
                                                 
             shaderFonts = new ShaderProgram(vert_shader, frag_shader);
 
-            FreeTypeClassApi fts = new FreeTypeClassApi(fontePath);
+            FreeTypeClassApi FTClassApi = new FreeTypeClassApi(fontePath);
             
-            fts.SetPixelSizes(0, 48);
+            FTClassApi.SetPixelSizes(0, 48);
 
             GL.PixelStore(PixelStoreParameter.UnpackAlignment, 1);
 
             for(uint c = 0; c < 128; c++)
             {
-                fts.LoadChar(c);
+                FTClassApi.LoadChar(c);
 
-                FT_Bitmap bitmap = fts.GlyphBitmap;
+                FT_Bitmap bitmap = FTClassApi.GlyphBitmap;
 
                 int texture = GL.GenTexture();
                 GL.BindTexture(TextureTarget.Texture2D, texture);
                 GL.TexImage2D(
-                TextureTarget.Texture2D,
-                0,
-                PixelInternalFormat.R8, 
-                (int)bitmap.width, 
-                (int)bitmap.rows, 
-                0, 
-                PixelFormat.Red, 
-                PixelType.UnsignedByte, 
-                bitmap.buffer); 
+                    TextureTarget.Texture2D,
+                    0,
+                    PixelInternalFormat.R16, 
+                    (int)bitmap.width, 
+                    (int)bitmap.rows, 
+                    0, 
+                    PixelFormat.Red, 
+                    PixelType.UnsignedByte, 
+                    bitmap.buffer); 
 
 
                 GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
@@ -85,31 +86,37 @@ namespace MyGame
                 Character character = new Character();
                 character.TextureID = texture;
                 character.Size    = new Vector2i((int)bitmap.width, (int)bitmap.rows);
-                character.Bearing = new Vector2i(fts.GlyphBitmapLeft, fts.GlyphBitmapTop);
-                character.Advance = fts.GlyphMetricHorizontalAdvance;
+                character.Bearing = new Vector2i(FTClassApi.GlyphBitmapLeft, FTClassApi.GlyphBitmapTop);
+                character.Advance = FTClassApi.GlyphMetricHorizontalAdvance;
 
                 characteres.Add(c, character);
             }
 
-            fts.DoneFreetype();
-            Vao = GL.GenVertexArray();
-            GL.BindVertexArray(Vao);
+            FTClassApi.DoneFreetype();
 
-            Vbo = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, Vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * 6 * 4, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+            Vao = new VertexArrayObject();
+            Vbo = new BufferObject<float>( 6 * 4, BufferTarget.ArrayBuffer);
 
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 4, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
+            Vao.LinkBufferObject(ref Vbo);
+            Vao.VertexAttributePointer(0, 4, VertexAttribPointerType.Float, 4 * sizeof(float), 0);
+
         }
-        public void RenderText(string text, Vector2 position, float scale, System.Numerics.Vector4 color)
+        public static void RenderText(string text, Vector2 position, float scale, Color4 color4)
         {
-            GL.BindVertexArray(Vao);
-            shaderFonts.Use();
+            Render(text, position, scale, color4);
+        }
+        public static void RenderText(string text, Vector2 position, float scale, System.Numerics.Vector4 color4)
+        {
+            Render(text, position, scale, new Color4(color4.X, color4.Y, color4.Z, color4.W));
+        }
+        private static void Render(string text, Vector2 position, float scale, Color4 color4)
+        {
+            Vao!.Bind();
+
+            shaderFonts!.Use();
             Matrix4 projection = Matrix4.CreateOrthographicOffCenter(0.0f, Program.Size.X, 0.0f, Program.Size.Y, 0.0f, 1.0f);
             shaderFonts.SetUniform("projection", projection);
-            shaderFonts.SetUniform("textColor", color);
-            
+            shaderFonts.SetUniform("textColor", color4);
 
             foreach(var c in text)
             {
@@ -135,13 +142,12 @@ namespace MyGame
                     { xpos + w, ypos,       1.0f, 1.0f },
                     { xpos + w, ypos + h,   1.0f, 0.0f }
                 };
+
                 GL.ActiveTexture(TextureUnit.Texture0);
                 GL.BindTexture(TextureTarget.Texture2D, ch.TextureID);
-                shaderFonts.SetUniform("text", 0);
+                shaderFonts.SetUniform("textureText", 0);
 
-                GL.BindBuffer(BufferTarget.ArrayBuffer, Vbo);
-                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, vertices.Length * sizeof(float), vertices);
-
+                Vbo!.SuberData(vertices);
 
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
                 
@@ -150,10 +156,9 @@ namespace MyGame
         public void Dispose()
         {
             GL.DeleteTextures(characteres.Count, characteres.Keys.ToArray());
+            Vao!.Dispose();
 
-            shaderFonts.Dispose();
-            GL.DeleteBuffer(Vbo);
-            GL.DeleteVertexArray(Vao);
+            shaderFonts!.Dispose();
         }
     }
     

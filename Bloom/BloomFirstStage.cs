@@ -1,7 +1,7 @@
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace MyGame
+namespace MyGame.BloomStages
 {
 
     public class BloomFirstStage
@@ -22,10 +22,14 @@ namespace MyGame
 
         private bool mKarisAverageOnDownsample = true;
 
+        private TextureProgram Ghost;
+
         public BloomFirstStage(int NumBlomMips)
         {
-            mDownsampleShader = new ShaderProgram("Bloom/shadersBloom/new_bloom.vert", "Bloom/shadersBloom/downscale.frag");
-            mUpsampleShader = new ShaderProgram("Bloom/shadersBloom/new_bloom.vert", "Bloom/shadersBloom/upscale.frag");
+            mDownsampleShader = new ShaderProgram("Bloom/shadersBloom/bloom.vert", "Bloom/shadersBloom/downscale.frag");
+            mUpsampleShader = new ShaderProgram("Bloom/shadersBloom/bloom.vert", "Bloom/shadersBloom/upscale.frag");
+            Ghost = new TextureProgram("Resources/img/bokeh_circle.png", PixelInternalFormat.Rgba, TextureUnit.Texture1);
+
 
             mMipChain = new BloomMip[NumBlomMips];
 
@@ -83,8 +87,10 @@ namespace MyGame
             GL.BindTexture(TextureTarget.Texture2D, srcTexture);
             mDownsampleShader.SetUniform("srcTexture", 0);
 
+
             for(int i = 0; i < mMipChain.Length; i++)
             {
+
                 BloomMip mip = mMipChain[i];
                 GL.Viewport(0, 0, (int)mip.size.X, (int)mip.size.Y);
                 GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
@@ -92,6 +98,7 @@ namespace MyGame
 
                 Quad.RenderQuad();
 
+                GL.ActiveTexture(TextureUnit.Texture0);
                 mDownsampleShader.SetUniform("srcResolution", mip.size);
                 GL.BindTexture(TextureTarget.Texture2D, mip.texture);
 
@@ -112,6 +119,11 @@ namespace MyGame
             
             for(int i = mMipChain.Length - 1; i > 0; i--)
             {
+
+                mUpsampleShader.SetUniform("ghostTex", Ghost.Use);
+                mUpsampleShader.SetUniform("uGhosts", Values.uGhost);
+                mUpsampleShader.SetUniform("uGhostDispersal", Values.uGhostDispersal);
+                
                 BloomMip mip = mMipChain[i];
                 BloomMip nextMip = mMipChain[i - 1];
 

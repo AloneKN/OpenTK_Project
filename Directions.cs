@@ -2,7 +2,7 @@ using OpenTK.Mathematics;
 
 namespace MyGame
 {
-    class Directions
+    public class Directions
     {
         private struct Movimento
         {
@@ -48,46 +48,30 @@ namespace MyGame
                 return (float)Math.Pow(2, x);
             }
         }
-        //-------------------------------------------------------------
-
-        private Movimento _PosX;
-        private Movimento _NegX;
-        private Movimento _PosY;
-        private Movimento _NegY;
-        private Movimento _PosZ;
-        private Movimento _NegZ;
-        public Directions(float velmax, float velmin, float velup, float veldown)
+        private Movimento[] movimento = new Movimento[6];
+        public Directions(float max, float min, float up, float down)
         {
-            _PosX = new Movimento(new Vector2(velmax, velmin), new Vector2(velup, veldown)); 
-            _NegX = new Movimento(new Vector2(velmax, velmin), new Vector2(velup, veldown)); 
-            _PosY = new Movimento(new Vector2(velmax, velmin), new Vector2(velup, veldown)); 
-            _NegY = new Movimento(new Vector2(velmax, velmin), new Vector2(velup, veldown)); 
-            _PosZ = new Movimento(new Vector2(velmax, velmin), new Vector2(velup, veldown)); 
-            _NegZ = new Movimento(new Vector2(velmax, velmin), new Vector2(velup, veldown)); 
+            for(int i = 0; i < movimento.Length; i++)
+            {
+                movimento[i] = new Movimento(new Vector2(max, min), new Vector2(up, down));
+            }
         }
-        public float PositiveX()
-        {
-            return _PosX.upMove();
-        } 
-        public float NegativeX()
-        {
-            return _NegX.downMove();
-        } 
-        public float PositiveY()
-        {
-            return _PosY.upMove();
-        } 
-        public float NegativeY()
-        {
-            return _NegY.downMove();
-        } 
-        public float PositiveZ()
-        {
-            return _PosZ.upMove();
-        } 
-        public float NegativeZ()
-        {
-            return _NegZ.downMove();
-        } 
+        // Moving X
+        public float X_positiveUp { get => (TimerGL.ElapsedTime * 500) * movimento[0].upMove(); } 
+        public float X_positiveDowm { get => (TimerGL.ElapsedTime * 500) * movimento[0].downMove(); } 
+        public float X_negativeUp { get => (TimerGL.ElapsedTime * 500) * movimento[1].upMove(); } 
+        public float X_negativeDowm { get => (TimerGL.ElapsedTime * 500) * movimento[1].downMove(); } 
+        // Moving X
+        public float Y_positiveUp { get => (TimerGL.ElapsedTime * 500) * movimento[2].upMove(); } 
+        public float Y_positiveDowm { get => (TimerGL.ElapsedTime * 500) * movimento[2].downMove(); } 
+        public float Y_negativeUp { get => (TimerGL.ElapsedTime * 500) * movimento[3].upMove(); } 
+        public float Y_negativeDowm { get => (TimerGL.ElapsedTime * 500) * movimento[3].downMove(); } 
+        // Moving X
+        public float Z_positiveUp { get => (TimerGL.ElapsedTime * 500) * movimento[4].upMove(); } 
+        public float Z_positiveDowm { get => (TimerGL.ElapsedTime * 500) * movimento[4].downMove(); } 
+        public float Z_negativeUp { get => (TimerGL.ElapsedTime * 500) * movimento[5].upMove(); } 
+        public float Z_negativeDowm { get => (TimerGL.ElapsedTime * 500) * movimento[5].downMove(); } 
+        
+
     }
 }

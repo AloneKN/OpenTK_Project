@@ -24,7 +24,6 @@ namespace MyGame
 	    public string _EmissivePath = string.Empty;
         public string _AmbientOcclusionPath = string.Empty;
     }
-    
     public class Meshe : IDisposable
     {
         // private BuffersVertex buffers;
@@ -36,7 +35,9 @@ namespace MyGame
         private BufferObject<ushort> Ebo;
         public unsafe Meshe(List<Vertex> Vertices, List<ushort> Indices, ModelTexturesPath texturesPath)
         {
+
             indicesCount = Indices.Count;
+
 
             DiffusePath             =   texturesPath._DiffusePath;
 	        SpecularPath            =   texturesPath._SpecularPath;
@@ -68,28 +69,28 @@ namespace MyGame
         public void RenderFrame()
         {
             Vao.Bind();
-            GL.DrawElements(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, indicesCount, DrawElementsType.UnsignedShort, 0);
+
+            GL.DrawElements(PrimitiveType.Triangles, indicesCount, DrawElementsType.UnsignedShort, 0);
         }
-        public void Dispose()
-        {
-            Vao.Dispose();
-            Vbo.Dispose();
-            Ebo.Dispose();
-            
-        }
+        public void Dispose() => Vao.Dispose();
         public void PrintTexturesMap()
         {
-            Console.WriteLine();
-            Console.WriteLine($"DiffusePath          : {DiffusePath}");
-            Console.WriteLine($"SpecularPath         : {SpecularPath}");
-            Console.WriteLine($"NormalPath           : {NormalPath}");
-            Console.WriteLine($"HeightMap            : {HeightMap}");
-            Console.WriteLine($"MetallicPath         : {MetallicPath}");
-            Console.WriteLine($"RoughnnesPath        : {RoughnnesPath}");
-            Console.WriteLine($"LightMap             : {LightMap}");
-            Console.WriteLine($"EmissivePath         : {EmissivePath}");
-            Console.WriteLine($"AmbientOcclusionPath : {AmbientOcclusionPath}");
+            Console.WriteLine("Meshes Maps Contains...");
+            _Print("DiffusePath", DiffusePath);
+            _Print("SpecularPath", SpecularPath);
+            _Print("NormalPath", NormalPath);
+            _Print("HeightMap", HeightMap);
+            _Print("MetallicPath", MetallicPath);
+            _Print("RoughnnesPath", RoughnnesPath);
+            _Print("LightMap", LightMap);
+            _Print("EmissivePath", EmissivePath);
+            _Print("AmbientOcclusionPath", AmbientOcclusionPath);
             Console.WriteLine("\n -------------------------------------------------------------- \n");
+        }
+        private void _Print(string TypeTexture, string pathTex)
+        {
+            if(pathTex != string.Empty)
+                Console.WriteLine($"{TypeTexture} : {pathTex}");
         }
     }
 }

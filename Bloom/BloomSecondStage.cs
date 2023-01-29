@@ -2,12 +2,12 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 
-namespace MyGame
+namespace MyGame.BloomStages
 {
-    class Bloom : IDisposable
+    class BloomSecondStage : IDisposable
     {
         private Vector2i sizeWindow { get => Program.Size; }
-        private ShaderProgram shaderNewBloomFinal;
+        private ShaderProgram shaderBloomFinal;
 
         private int renderBuffer;
         private int frameBuffer;
@@ -17,17 +17,16 @@ namespace MyGame
         // new bloom
         private BloomFirstStage FirstStage;
 
-        public Bloom()
+        public BloomSecondStage(int NumBlomMips)
         {
 
-            shaderNewBloomFinal = new ShaderProgram("Bloom/shadersBloom/new_bloom.vert", "Bloom/shadersBloom/newbloomfinal.frag");
+            shaderBloomFinal = new ShaderProgram("Bloom/shadersBloom/bloom.vert", "Bloom/shadersBloom/BloomFinal.frag");
 
-            FirstStage = new BloomFirstStage(6);
+            FirstStage = new BloomFirstStage(NumBlomMips);
 
             frameBuffer  = GL.GenFramebuffer();
             renderBuffer = GL.GenRenderbuffer();
             GL.GenTextures(2, TexturesBuffer);
-
 
             ResizedFrame();
         }
@@ -64,57 +63,51 @@ namespace MyGame
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
         }
-        public static bool EnableBloom { get => Values.isRenderBloom; }
         public void Active()
         {
-            if(EnableBloom)
-            {
-                GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer);
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
-            }
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, frameBuffer);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
         }
         public void ResizedFrameBuffer()
         {
-            if(EnableBloom)
-            {
-                ResizedFrame();
-                FirstStage.ResizedFrameBuffer();
-            }
+            FirstStage.ResizedFrameBuffer();
+            ResizedFrame();
         }
         public void RenderFrame()
         {
-            if(EnableBloom)
-            {
-                FirstStage.RenderBloomTexture(UseTexture, Values.filterRadius);
+            
+            FirstStage.RenderBloomTexture(UseTexture, Values.Bloom.FilterRadius);
 
-                GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 
-                shaderNewBloomFinal.Use();
-                GL.ActiveTexture(TextureUnit.Texture0);
-                GL.BindTexture(TextureTarget.Texture2D, TexturesBuffer[0]);
-                shaderNewBloomFinal.SetUniform("scene", 0);
+            shaderBloomFinal.Use();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, TexturesBuffer[0]);
+            shaderBloomFinal.SetUniform("scene", 0);
 
-                GL.ActiveTexture(TextureUnit.Texture1);
-                GL.BindTexture(TextureTarget.Texture2D, FirstStage.UseTexture);
-                shaderNewBloomFinal.SetUniform("bloomBlur", 1);
+            GL.ActiveTexture(TextureUnit.Texture1);
+            GL.BindTexture(TextureTarget.Texture2D, FirstStage.UseTexture);
+            shaderBloomFinal.SetUniform("bloomBlur", 1);
 
-                shaderNewBloomFinal.SetUniform("exposure", Values.new_bloom_exp);
-                shaderNewBloomFinal.SetUniform("bloomStrength", Values.new_bloom_streng);
-                shaderNewBloomFinal.SetUniform("gamma", Values.new_bloom_gama);
-                shaderNewBloomFinal.SetUniform("film_grain", Values.new_bloom_filmGrain);
-                shaderNewBloomFinal.SetUniform("elapsedTime", Clock.ElapsedTime);
+            shaderBloomFinal.SetUniform("exposure", Values.Bloom.Exposure);
+            shaderBloomFinal.SetUniform("bloomStrength", Values.Bloom.Strength);
+            shaderBloomFinal.SetUniform("gamma", Values.Bloom.Gamma);
+            shaderBloomFinal.SetUniform("film_grain", Values.Bloom.FilmGrain);
+            shaderBloomFinal.SetUniform("elapsedTime", TimerGL.ElapsedTime);
 
-                shaderNewBloomFinal.SetUniform("nitidezStrength", Values.nitidezStrengh);
+            shaderBloomFinal.SetUniform("nitidezStrength", Values.Bloom.Nitidez);
+            shaderBloomFinal.SetUniform("vibrance", Values.Bloom.Vibrance / -255f);
+            shaderBloomFinal.SetUniform("activeNegative", Values.Bloom.Negative);
 
-                Quad.RenderQuad();
-            }
+
+            Quad.RenderQuad();
 
         }
         public void Dispose()
         {
             FirstStage.Dispose();
-            shaderNewBloomFinal.Dispose();
+            shaderBloomFinal.Dispose();
 
             GL.DeleteTextures(2, TexturesBuffer);
             GL.DeleteRenderbuffer(renderBuffer);

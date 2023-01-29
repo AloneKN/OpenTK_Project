@@ -10,14 +10,19 @@ namespace MyGame
     public class Program
     {
         public static GameWindow window = new GameWindow(Window.gws, Window.nws);
-        public static Camera Camera = new Camera();
+        // public static Camera Camera = new Camera();
+        public static Camera Camera = new Camera(Vector3.UnitZ * 5f);
         public static Vector2i Size = new Vector2i(window.Size.X, window.Size.Y);
         private static ImGuiController ?Imgui_controller;
         private static Game ?game;
+        private static Text ?text;
+        private static PhysicsWorld physicsWorld = new PhysicsWorld();
         public static bool vsync = true;
         public static bool fullscreen = false;
         private static void Main()
         {
+            
+
             window.Load += delegate
             {
                 // DebugGL.InitDebug();
@@ -25,11 +30,13 @@ namespace MyGame
                 StartGlobal();
 
                 Imgui_controller = new ImGuiController(window.Size);
+                text = new Text("Resources/Fonts/Courier Prime Sans.ttf");
                 game = new Game();
             };
             window.RenderFrame += delegate(FrameEventArgs frameEventArgs)
             {
-                
+                physicsWorld.UpdateFrameSimulation(frameEventArgs.Time);
+
                 Imgui_controller!.Update(Program.window, (float)frameEventArgs.Time);
 
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
@@ -66,7 +73,7 @@ namespace MyGame
                     window.VSync = vsync ? VSyncMode.On : VSyncMode.Off;
                 }
 
-                Clock.TimerUpdateFrame(eventArgs);
+                TimerGL.TimerUpdateFrame(eventArgs);
 
                 // update game
                 Camera.UpdateCamera();
@@ -98,6 +105,7 @@ namespace MyGame
             };
             window.Unload += delegate
             {
+                physicsWorld.Dispose();
                 game!.Dispose();
             };
 
@@ -131,6 +139,9 @@ namespace MyGame
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             
             GL.ClearColor(Color4.Black);
+
+            GL.Enable(EnableCap.LineSmooth);
+            GL.Enable(EnableCap.ColorSum);
         }
     }
 }

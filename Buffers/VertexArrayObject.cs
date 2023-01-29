@@ -1,4 +1,5 @@
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 
 namespace MyGame
 {
@@ -6,52 +7,34 @@ namespace MyGame
     public class VertexArrayObject : IDisposable
     {
         private int Handle;
+        private List<int> buffersLinked;
         public VertexArrayObject()
         {
             Handle = GL.GenVertexArray();
+            buffersLinked = new List<int>();
         }
-        public void LinkBufferObject(ref BufferObject<float> bufferObject)
+        public void LinkBufferObject<TDataType>(ref BufferObject<TDataType> bufferObject) where TDataType : unmanaged
         {
             Bind();
             bufferObject.Bind();
-        }
-        public void LinkBufferObject(ref BufferObject<int> bufferObject)
-        {
-            Bind();
-            bufferObject.Bind();
-        }
-        public void LinkBufferObject(ref BufferObject<uint> bufferObject)
-        {
-            Bind();
-            bufferObject.Bind();
-        }
-        public void LinkBufferObject(ref BufferObject<ushort> bufferObject)
-        {
-            Bind();
-            bufferObject.Bind();
-        }
-        public void LinkBufferObject(ref BufferObject<Vertex> bufferObject)
-        {
-            Bind();
-            bufferObject.Bind();
+            buffersLinked.Add(bufferObject.Handle);
         }
         public unsafe void VertexAttributePointer(uint index, int count, VertexAttribPointerType type, int vertexSize, int offSet)
-        {
-            GL.VertexAttribPointer(index, count, type, false, vertexSize * sizeof(float), offSet * sizeof(float));
-            GL.EnableVertexAttribArray(index);
-        }
-        public unsafe void VertexAttributePointer(uint index, int count, VertexAttribPointerType type, int vertexSize, IntPtr offSet)
         {
             GL.VertexAttribPointer(index, count, type, false, vertexSize, offSet);
             GL.EnableVertexAttribArray(index);
         }
-        public void Bind()
+        public unsafe void VertexAttributePointer(uint index, int count, VertexAttribPointerType type, int vertexSize, IntPtr offSet)
         {
-            GL.BindVertexArray(Handle);
+            GL.VertexAttribPointer(index, count, type, false, vertexSize, (int)offSet);
+            GL.EnableVertexAttribArray(index);
         }
+        public void Bind() => GL.BindVertexArray(Handle);
+        
         public void Dispose()
         {
             GL.DeleteVertexArray(Handle);
+            GL.DeleteBuffers(buffersLinked.Count, buffersLinked.ToArray());
         }
     }
 }

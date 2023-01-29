@@ -3,29 +3,40 @@ using OpenTK.Graphics.OpenGL4;
 namespace MyGame
 {
     // Nossa abstração do objeto buffer.
-    public class BufferObject<TDataType> : IDisposable
+    public class BufferObject<TDataType>
     where TDataType : unmanaged
     {
-        private int Handle;
-        private BufferTarget _bufferTarget;
+        public int Handle { get; private set; }
+        private BufferTarget bufferTarget;
 
         public unsafe BufferObject(Span<TDataType> data, BufferTarget bufferTarget)
         {
-            _bufferTarget = bufferTarget;
+            this.bufferTarget = bufferTarget;
 
             Handle = GL.GenBuffer();
             Bind();
-            GL.BufferData(_bufferTarget, data.Length * sizeof(TDataType), data.ToArray(), BufferUsageHint.StaticDraw);
+            GL.BufferData(bufferTarget, data.Length * sizeof(TDataType), data.ToArray(), BufferUsageHint.StaticDraw);
         }
-
-        public void Bind()
+        public unsafe BufferObject(int amount, BufferTarget bufferTarget)
         {
-            GL.BindBuffer(_bufferTarget, Handle);
-        }
+            this.bufferTarget = bufferTarget;
 
-        public void Dispose()
-        {
-            GL.DeleteBuffer(Handle);
+            Handle = GL.GenBuffer();
+            Bind();
+            GL.BufferData(bufferTarget, amount * sizeof(TDataType), IntPtr.Zero, BufferUsageHint.DynamicDraw);
         }
+        public unsafe void SuberData(Span<TDataType> data)
+        {
+            Bind();
+            GL.BufferSubData(bufferTarget, IntPtr.Zero, data.Length * sizeof(TDataType), data.ToArray());
+
+        }
+        public unsafe void SuberData(TDataType[,] data)
+        {
+            Bind();
+            GL.BufferSubData(bufferTarget, IntPtr.Zero, data.Length * sizeof(TDataType), data);
+
+        }
+        public void Bind() => GL.BindBuffer(bufferTarget, Handle);
     }
 }

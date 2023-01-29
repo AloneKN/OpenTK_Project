@@ -38,6 +38,7 @@ float KarisAverage(vec3 col)
 	return 1.0f / (1.0f + luma);
 }
 
+
 // NOTE: This is the readable version of this shader. It will be optimized!
 void main()
 {
@@ -104,11 +105,11 @@ void main()
 	  downsample = groups[0]+groups[1]+groups[2]+groups[3]+groups[4];
 	  downsample = max(downsample, 0.0001f);
 	  break;
-	default:
-	  downsample = e*0.125;                // ok
-	  downsample += (a+c+g+i)*0.03125;     // ok
-	  downsample += (b+d+f+h)*0.0625;      // ok
-	  downsample += (j+k+l+m)*0.125;       // ok
-	  break;
-	}
+		default:
+		downsample = e*0.125;                // ok
+		downsample += (a+c+g+i)*0.03125;     // ok
+		downsample += (b+d+f+h)*0.0625;      // ok
+		downsample += (j+k+l+m)*0.125;       // ok
+		break;
+		}
 }

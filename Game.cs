@@ -1,71 +1,79 @@
 using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL4;
 
 namespace MyGame
 {
     public class Game : IDisposable
     {
-        
         public CubeMap cubeMap;
-        private Text text;
         private ViewPort crossHair;
         private Bloom bloom;
-        private ObjColor Light;
-        private Stencil stencil;
         public static Vector3 LuzPosition = Vector3.UnitY * 5.0f;
         private Model Unitron;
-        public Game()
+        private Demo demo;
+        public unsafe Game()
         {
-            text = new Text("Resources/Fonts/Wigners.otf");
+            
+            demo = new Demo();
 
             crossHair = new ViewPort("Resources/img/crosshair.png");
-            Light = new ObjColor();
 
-            cubeMap = new CubeMap("Resources/Cubemap/HDRI/Milkyway.hdr", false);
-            // cubeMap = new CubeMap("Resources/Cubemap/nebulle.jpg", false);
-            // cubeMap = new CubeMap("Resources/Cubemap/mars.png", true);
+            cubeMap = new CubeMap("Resources/Cubemap/HDRI/Milkyway.hdr", CubeMapType.Type0);
+            // cubeMap = new CubeMap("Resources/Cubemap/meadow.png", CubeMapType.Type2);
+            // cubeMap = new CubeMap("Resources/Cubemap/mars.png", CubeMapType.Type3);
+            // cubeMap = new CubeMap(new Faces()
+            // {
+            //     PathFaces = "Resources/Cubemap/asteroids",
+            //     Textures = new List<string>()
+            //     { "right.jpg", "left.jpg", "up.jpg", "down.jpg", "back.jpg", "front.jpg" }
+            // });
             
-            Unitron = new Model(AssimpModel.Load("Resources/unitron/scene.gltf"));
-            Unitron.texturesCubemaps = cubeMap.texturesCBMaps;
+            Unitron = new Model("Resources/unitron/scene.gltf");
+            Unitron.UseTexCubemap = cubeMap.UseTextures;
 
             bloom = new Bloom();
-            stencil = new Stencil();
+
 
         }
         public void RenderFrame()
         {
- 
-            bloom.Active();
+            bloom.BindBloom();
 
             cubeMap.RenderFrame();
 
-            Light.RenderFrame();
 
-            stencil.Active();
             Unitron.RenderFrame();
 
+            demo.RenderFrame();
 
-            stencil.RenderFrame(Unitron.modelMatrix, Values.StencilColor);
-            Unitron.RenderForStencil();
-            stencil.Deactive();
+            PhysicsWorld.RenderObjects();
+
+            bloom.RenderFrame();
+
 
             crossHair.RenderFrame(Vector2.Zero, 0.03f);
 
-            text.RenderText($"Frames: {Clock.FramesForSecond.ToString()}", new Vector2(10.0f, Program.Size.Y - 50.0f),
+
+            Text.RenderText($"Frames: {TimerGL.FramesForSecond.ToString()}", new Vector2(10.0f, Program.Size.Y - 50.0f),
                             0.45f, Values.fpsColor);
 
-            bloom.RenderFrame();
+            Text.RenderText($"Camera Position {Camera.Position}", new Vector2(100f, 40f), 0.5f, Color4.AliceBlue);
 
         }
         public void ResizedFrame()
         {
-            bloom.ResizedFrameBuffer();
+            bloom.ResizedFrame();
         }
         public void UpdateFrame()
         {
-            Light.UpdateFrame();
+            Unitron.UpdateFrame();
+            
+            demo.UpdateFrame();
         }
         public void Dispose()
         {   
+            demo.Dispose();
+            Unitron.Dispose();
         }
     }
 }
